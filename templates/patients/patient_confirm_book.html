@@ -1,0 +1,143 @@
+{% extends 'patients/base.html' %}
+{% load static %}
+{% block title %}Xác nhận{% endblock title %}
+{% block page_title %}Xác nhận đặt lịch{% endblock page_title %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+  .confirm-wrap { font-family: 'Be Vietnam Pro', sans-serif; }
+  .info-item { padding: 12px 16px; border-radius: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; }
+  .btn-primary-custom {
+    background: #0EA5E9; border: none; border-radius: 12px; padding: 14px 40px;
+    font-weight: 600; font-size: 16px; transition: all 0.25s;
+  }
+  .btn-primary-custom:hover { background: #0284C7; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(14,165,233,0.35); }
+  .success-icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto;
+  }
+  .success-icon i { font-size: 40px; color: #10B981; }
+</style>
+
+<div class="confirm-wrap">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm" style="border-radius:16px;">
+        <div class="card-body p-4">
+
+          <h4 class="fw-bold mb-4" style="color:#0f172a;">
+            <i class="bi bi-calendar-check me-2" style="color:#0EA5E9;"></i>Xác nhận đặt lịch
+          </h4>
+
+          <!-- Doctor Info -->
+          <div class="d-flex align-items-center p-3 rounded-3 mb-4" style="background:#F0F9FF;border:1px solid #BAE6FD;">
+            <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width:56px;height:56px;">
+              <i class="bi bi-person-badge fs-4" style="color:#0EA5E9;"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold mb-1" style="color:#0f172a;">Bs. {{ doctor.user.last_name }} {{ doctor.user.first_name }}</h5>
+              <span class="badge" style="background:#E0F2FE;color:#0369a1;">{{ doctor.specialty.name }}</span>
+            </div>
+          </div>
+
+          <form method="POST" id="bookingForm">
+            {% csrf_token %}
+
+            <!-- Patient Profile -->
+            <div class="mb-4">
+              <label class="fw-semibold mb-2" style="color:#0f172a;">Hồ sơ bệnh nhân <span class="text-danger">*</span></label>
+              <select name="profile_id" class="form-control py-3" style="border:2px solid #E2E8F0;border-radius:12px;" required>
+                <option value="">-- Chọn hồ sơ --</option>
+                {% for p in profiles %}
+                <option value="{{ p.id }}">{{ p.full_name }} ({{ p.birth_year }})</option>
+                {% endfor %}
+              </select>
+              <small><a href="{% url 'profile_create' %}" target="_blank" style="color:#0EA5E9;"><i class="bi bi-plus-circle"></i> Thêm hồ sơ mới</a></small>
+            </div>
+
+            <!-- Date & Time -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <div class="info-item">
+                  <small class="text-uppercase fw-semibold" style="color:#64748b;font-size:11px;letter-spacing:0.5px;">Ngày khám</small>
+                  <div class="fw-bold mt-1" style="color:#0f172a;font-size:16px;">
+                    <i class="bi bi-calendar3 me-2" style="color:#0EA5E9;"></i>
+                    {{ preselect_date|default:"Chưa chọn" }}
+                  </div>
+                  <input type="hidden" name="date" value="{{ preselect_date }}">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-item">
+                  <small class="text-uppercase fw-semibold" style="color:#64748b;font-size:11px;letter-spacing:0.5px;">Giờ khám</small>
+                  <div class="fw-bold mt-1" style="color:#0f172a;font-size:16px;">
+                    <i class="bi bi-clock me-2" style="color:#0EA5E9;"></i>
+                    {{ preselect_time|default:"Chưa chọn" }}
+                  </div>
+                  <input type="hidden" name="time" value="{{ preselect_time }}">
+                </div>
+              </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="mb-3">
+              <label class="fw-semibold mb-2" style="color:#0f172a;">Lý do khám <span class="text-danger">*</span></label>
+              <input type="text" class="form-control py-3" name="summary" required placeholder="VD: Khám tổng quát, tái khám định kỳ..." style="border:2px solid #E2E8F0;border-radius:12px;">
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+              <label class="fw-semibold mb-2" style="color:#0f172a;">Ghi chú thêm</label>
+              <textarea class="form-control py-3" name="description" rows="3" placeholder="Triệu chứng, yêu cầu đặc biệt..." style="border:2px solid #E2E8F0;border-radius:12px;"></textarea>
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex justify-content-between pt-3 border-top">
+              <a href="{% url 'book_appointment' %}" class="btn btn-outline-dark px-4 py-2" style="border-radius:10px;">
+                <i class="bi bi-arrow-left"></i> Quay lại
+              </a>
+              <button type="submit" class="btn btn-primary-custom text-white px-5" onclick="this.disabled=true;this.form.submit();">
+                <i class="bi bi-check-lg me-2"></i>Xác nhận đặt lịch
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SUCCESS MODAL ====== -->
+{% if booking_success %}
+<div class="modal fade show" id="successModal" tabindex="-1" style="display:block;background:rgba(0,0,0,0.5);" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="border-radius:16px;border:none;">
+      <div class="modal-body text-center p-5">
+        <div class="success-icon mb-4">
+          <i class="bi bi-check-lg"></i>
+        </div>
+        <h4 class="fw-bold" style="color:#0f172a;">Đặt lịch thành công!</h4>
+        <p style="color:#64748b;font-size:15px;">
+          Lịch hẹn của bạn đã được ghi nhận.<br>
+          <strong>Bs. {{ doctor.user.last_name }} {{ doctor.user.first_name }}</strong> sẽ xác nhận trong thời gian sớm nhất.
+        </p>
+        <a href="{% url 'my_appointments' %}" class="btn btn-primary-custom text-white px-5 mt-3">
+          <i class="bi bi-check-circle me-2"></i>Xem lịch hẹn của tôi
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if not booking_success %}
+<script>
+{% if messages %}
+document.addEventListener('DOMContentLoaded', function() {
+});
+{% endif %}
+</script>
+{% endif %}
+{% endblock %}

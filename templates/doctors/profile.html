@@ -1,0 +1,171 @@
+{% extends base_template %}
+
+{% load static %}
+
+{% block title %} Hồ sơ {% endblock title %}
+{% block page_title %} Hồ sơ {% endblock page_title %}
+
+{% block content %}
+<main>
+  <section class="recent">
+    <div class="table-div">
+      <div class="table-card">
+        <div class="row p-3 justify-content-evenly user-profile">
+          <h2 class="text-center fw-bold mb-5" style="color: rgb(3, 11, 72);">Hồ sơ của tôi</h2>
+
+          <div class="col-12 col-md-5  shadow mb-4">
+            <div class="row justify-content-evenly">
+              <h4 class="text-center fw-bold mt-3 mb-2" style="color: rgb(3, 11, 72);"></h4>
+              <hr>
+              <div class="col-11">
+                <span class="fw-bold">Họ và tên : </span>
+                <p class="ms-4">{{ basicdata.last_name }} {{ basicdata.first_name }}</p>
+              </div>
+              <hr>
+              <div class="col-11">
+                <span class="fw-bold">Email : </span>
+                <p class="ms-4">{{ basicdata.email }}</p>
+              </div>
+              <hr>
+
+              <form method="post">
+                {% csrf_token %}
+                <h5 class="mt-3 fw-bold mb-3">Đổi mật khẩu</h5>
+
+                {% if updated_password_successfully %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    Mật khẩu đã được cập nhật!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+                {% if messages %}
+                <div class="alert alert-danger" role="alert">
+                  {% for message in messages %}
+                    {{ message }}
+                  {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="current_password">Mật khẩu hiện tại</label>
+                  <input type="password" class="form-control" name="current_password" required />
+                  <div class="invalid-feedback">Vui lòng nhập mật khẩu hiện tại</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="new_password">Mật khẩu mới</label>
+                  <input type="password" class="form-control" name="new_password" required />
+                  <div class="invalid-feedback">Vui lòng nhập mật khẩu mới</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="confirm_new_password">Xác nhận mật khẩu mới</label>
+                  <input type="password" class="form-control" name="confirm_new_password" required />
+                  <div class="invalid-feedback">Vui lòng xác nhận mật khẩu mới</div>
+                </div>
+
+                <div class="mb-3">
+                  <button type="submit" class="btn btn-primary primary-color-background w-100" name="update_password">Đổi mật khẩu</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+
+          <div class="col-12 col-md-6 mb-4">
+            <div class="row shadow mb-3 p-3 ">
+              <h5 class="mt-3 fw-bold mb-3">Thông tin cá nhân</h5>
+              <form method="POST">
+                {% csrf_token %}
+
+                {% if updated_profile_successfully %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    Hồ sơ đã được cập nhật!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="first_name">Tên</label>
+                  <input id="first_name" type="text" class="form-control" name="user_firstname" value="{{ basicdata.first_name }}" required autofocus />
+                  <div class="invalid-feedback">Vui lòng nhập tên</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="last_name">Họ</label>
+                  <input id="last_name" type="text" class="form-control" name="user_lastname" value="{{ basicdata.last_name }}" required autofocus />
+                  <div class="invalid-feedback">Vui lòng nhập họ</div>
+                </div>
+
+                {% if not request.user.is_doctor %}
+                  <div class="mb-3">
+                    <label class="mb-2 fw-bold" for="insurance">Bảo hiểm </label>
+                    <input id="insurance" type="text" class="form-control" name="insurance" value="{{ basicdata.patients.insurance }}" required />
+                    <div class="invalid-feedback">Vui lòng nhập thông tin bảo hiểm</div>
+                  </div>
+                {% else %}
+                  <div class="mb-3">
+                    <label class="mb-2 fw-bold" for="specialty">Chuyên khoa</label>
+                    <select name="Speciality" class="form-select" id="">
+                      {% for speciality in specialities %}
+                      <option value="{{speciality.name}}" {% if speciality.name == basicdata.doctors.specialty.name %}selected{% endif %} >{{speciality.name}}</option>
+                      {%endfor%}
+                    </select>
+                    <div class="invalid-feedback">Vui lòng chọn chuyên khoa</div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="mb-2 fw-bold" for="bio">Giới thiệu</label>
+                    <textarea id="bio" class="form-control" name="bio" required>{{ basicdata.doctors.bio }}</textarea>
+                    <div class="invalid-feedback">Vui lòng nhập giới thiệu</div>
+                  </div>
+                {% endif %}
+
+              
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="select_gender">Giới tính</label>
+                  <select class="form-select" aria-label="Default select example" name="user_gender" id="select_gender">
+                      <option value="Male" {% if basicdata.gender == 'Male' %}selected{% endif %}>Nam</option>
+                      <option value="Female" {% if basicdata.gender == 'Female' %}selected{% endif %}>Nữ</option>
+                  </select>
+              </div>
+              
+                <div class="mb-3">
+                    <label class="mb-2 fw-bold" for="birthday">Ngày sinh</label>
+                    <input id="birthday" type="date" class="form-control" name="birthday" value="{{ basicdata.birthday|date:'Y-m-d' }}" required />
+                    <div class="invalid-feedback">Ngày sinh không hợp lệ</div>
+                </div>
+                
+              
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="update_address_line">Địa chỉ</label>
+                  <input id="update_address_line" type="text" class="form-control mb-2" name="address_line" value="{{ basicdata.id_address.address_line }}" placeholder="Địa chỉ" required />
+                  <div class="invalid-feedback">Vui lòng nhập địa chỉ</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="region">Khu vực</label>
+                  <input id="update_region" type="text" class="form-control mb-2" name="region" value="{{ basicdata.id_address.region }}" placeholder="Khu vực" required />
+                  <div class="invalid-feedback">Khu vực không hợp lệ</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="mb-2 fw-bold" for="region">Thành phố</label>
+                  <input id="update_city" type="text" class="form-control mb-2" name="city" value="{{ basicdata.id_address.city }}" placeholder="Thành phố" required />
+                  <div class="invalid-feedback">Thành phố không hợp lệ</div>
+                </div>
+
+                <div class="mb-3">
+                  <button type="submit" class="btn btn-primary primary-color-background w-100" name="update_profile">Cập nhật</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

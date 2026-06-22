@@ -1,0 +1,114 @@
+{% extends 'doctors/base.html' %}
+{% load static %}
+
+{% block title %}Bảng điều khiển{% endblock title %}
+{% block page_title %}Bảng điều khiển{% endblock page_title %}
+
+{% block content %}
+<main>
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6 mb-2">
+      <div class="card shadow-sm h-100" style="border-left: 4px solid #0d6efd;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1 small text-uppercase fw-semibold" style="color:#000 !important;">Hôm nay</p>
+              <h3 class="fw-bold mb-0" style="color:#000;">{{ examined_today }}</h3>
+              <small style="color:#000;">BN khám • {{ appointments_today }} lịch hẹn</small>
+            </div>
+            <div class="bg-primary bg-opacity-10 p-3 rounded">
+              <i class="bi bi-calendar-check fs-2 text-primary"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-2">
+      <div class="card shadow-sm h-100" style="border-left: 4px solid #198754;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1 small text-uppercase fw-semibold" style="color:#000 !important;">Tuần này</p>
+              <h3 class="fw-bold mb-0" style="color:#000;">{{ examined_week }}</h3>
+              <small style="color:#000;">BN khám • 7 ngày qua</small>
+            </div>
+            <div class="bg-success bg-opacity-10 p-3 rounded">
+              <i class="bi bi-graph-up-arrow fs-2 text-success"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-2">
+      <div class="card shadow-sm h-100" style="border-left: 4px solid #0dcaf0;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1 small text-uppercase fw-semibold" style="color:#000 !important;">Tháng này</p>
+              <h3 class="fw-bold mb-0" style="color:#000;">{{ examined_month }}</h3>
+              <small style="color:#000;">BN khám • {{ cls_month }} chỉ định CLS</small>
+            </div>
+            <div class="bg-info bg-opacity-10 p-3 rounded">
+              <i class="bi bi-file-text fs-2 text-info"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-2">
+      <div class="card shadow-sm h-100" style="border-left: 4px solid #ffc107;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="text-muted mb-1 small text-uppercase fw-semibold" style="color:#000 !important;">CLS chờ KQ</p>
+              <h3 class="fw-bold mb-0" style="color:#000;">{{ total_pending_cls }}</h3>
+              <small style="color:#000;">Tổng: {{ total_cls }} chỉ định</small>
+            </div>
+            <div class="bg-warning bg-opacity-10 p-3 rounded">
+              <i class="bi bi-flask fs-2 text-warning"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Feed -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-activity me-2"></i>Hoạt động gần đây</h5>
+      <small style="color:#000;">{{ activities|length }} hoạt động</small>
+    </div>
+    <div class="card-body p-0">
+      {% if activities %}
+      <div class="list-group list-group-flush">
+        {% for act in activities %}
+        <div class="list-group-item border-bottom d-flex align-items-start gap-3 py-3 px-4">
+          <div class="flex-shrink-0">
+            <span class="{{ act.color }} fs-5"><i class="bi {{ act.icon }}"></i></span>
+          </div>
+          <div class="flex-grow-1">
+            <div style="color:#000;">{{ act.text|safe }}</div>
+            <div class="d-flex gap-3 mt-1">
+              <small style="color:#000;">{{ act.time|date:"d/m/Y H:i" }}</small>
+              {% if act.detail %}
+              <small style="color:#000;">• {{ act.detail }}</small>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-4">
+        <p style="color:#000;" class="mb-0">Chưa có hoạt động nào</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

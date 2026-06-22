@@ -1,0 +1,32 @@
+{% extends 'administration/base.html' %}
+{% block title %}Sửa danh mục{% endblock %}
+{% block page_title %}Sửa danh mục{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-pencil me-2"></i>Sửa: {{ obj.name }}</h5>
+        <a href="{% url 'admin_categories' %}" class="btn btn-sm btn-outline-dark"><i class="bi bi-arrow-left"></i> Quay lại</a>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color:#000;">Tên <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ obj.name }}" required>
+          </div>
+          {% if obj.description is defined %}
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color:#000;">Mô tả</label>
+            <textarea name="description" class="form-control" rows="3">{{ obj.description }}</textarea>
+          </div>
+          {% endif %}
+          <button type="submit" class="btn btn-dark"><i class="bi bi-check-lg"></i> Lưu</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends 'doctors/base.html' %}
+{% load static %}
+
+{% block title %} Quản lý lịch hẹn {% endblock title %}
+{% block page_title %} Quản lý lịch hẹn {% endblock page_title %}
+
+{% block content %}
+<main>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end" id="filterForm">
+        <!-- Trạng thái -->
+        <div class="col-md-2">
+          <label class="form-label fw-bold text-dark">Trạng thái</label>
+          <select name="filter_status" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Tất cả</option>
+            <option value="Accepted" {% if filter_status == "Accepted" %}selected{% endif %}>Đã chấp nhận</option>
+            <option value="Waited" {% if filter_status == "Waited" %}selected{% endif %}>Đang chờ</option>
+            <option value="Cancelled" {% if filter_status == "Cancelled" %}selected{% endif %}>Đã hủy</option>
+          </select>
+        </div>
+
+        <!-- Ngày với Trước/Sau -->
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-dark">Ngày</label>
+          <div class="input-group input-group-sm">
+            <button type="button" class="btn btn-outline-dark" onclick="changeDate(-1)" title="Hôm qua">
+              <i class="bi bi-chevron-left"></i> Trước
+            </button>
+            <input type="date" name="filter_date" id="filterDate" class="form-control text-center" value="{{ filter_date|default:'' }}">
+            <button type="button" class="btn btn-outline-dark" onclick="changeDate(1)" title="Ngày mai">
+              Sau <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tên bệnh nhân -->
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-dark">Tên bệnh nhân</label>
+          <input type="text" name="filter_patient_name" class="form-control form-control-sm" placeholder="Nhập tên..." value="{% if filter_patient_name %}{{ filter_patient_name }}{% endif %}">
+        </div>
+
+        <!-- Nút tìm kiếm -->
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-dark w-100 btn-sm">
+            <i class="bi bi-search"></i> Tìm
+          </button>
+        </div>
+
+        <!-- Nút reset -->
+        <div class="col-md-2">
+          <a href="{% url 'view_appointments' %}" class="btn btn-outline-dark w-100 btn-sm">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered bg-white shadow-sm mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th style="width:50px;color:#fff !important;" class="text-center fw-bold">STT</th>
+          <th style="color:#fff !important;" class="fw-bold">Bệnh nhân</th>
+          <th style="width:110px;color:#fff !important;" class="fw-bold">Ngày hẹn</th>
+          <th style="width:70px;color:#fff !important;" class="fw-bold">Giờ</th>
+          <th style="color:#fff !important;" class="fw-bold">Tóm tắt</th>
+          <th style="width:130px;color:#fff !important;" class="text-center fw-bold">Trạng thái</th>
+          <th style="width:120px;color:#fff !important;" class="text-center fw-bold">Xử lý</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appointment in appointments %}
+        <tr>
+          <td class="text-center text-dark fw-bold">{{ forloop.counter }}</td>
+          <td>
+            <div class="fw-bold text-dark">{{ appointment.patient_profile.full_name|default:appointment.patient.user.first_name }}</div>
+            <small style="color:#000;">PID: {{ appointment.patient.user.username }}</small>
+          </td>
+          <td class="text-dark">{{ appointment.start_date|date:"d/m/Y" }}</td>
+          <td class="text-dark">{{ appointment.time.time }}</td>
+          <td class="text-dark">{{ appointment.summary|truncatewords:8 }}</td>
+          <td class="text-center">
+            {% if appointment.status.status == "Accepted" %}
+              <span class="badge bg-success">Đã xác nhận</span>
+            {% elif appointment.status.status == "Waited" %}
+              <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+            {% elif appointment.status.status == "Cancelled" %}
+              <span class="badge bg-danger">Đã hủy</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ appointment.status.status }}</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#actionModal{{ appointment.id }}" title="Xử lý">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
+        </tr>
+
+        <!-- Modal Xử lý -->
+        <div class="modal fade" id="actionModal{{ appointment.id }}" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-dark text-white">
+                <h6 class="modal-title">Cập nhật trạng thái lịch hẹn</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                  <p class="text-dark"><strong>Bệnh nhân:</strong> {{ appointment.patient_profile.full_name|default:appointment.patient.user.first_name }}</p>
+                  <p class="text-dark"><strong>Ngày hẹn:</strong> {{ appointment.start_date|date:"d/m/Y" }} lúc {{ appointment.time.time }}</p>
+                  
+                  <div class="mb-3">
+                    <label class="form-label fw-bold text-dark">Trạng thái mới</label>
+                    <select name="status" class="form-select" required>
+                      <option value="Accepted" {% if appointment.status.status == "Accepted" %}selected{% endif %}>Đã chấp nhận</option>
+                      <option value="Waited" {% if appointment.status.status == "Waited" %}selected{% endif %}>Đang chờ</option>
+                      <option value="Cancelled" {% if appointment.status.status == "Cancelled" %}selected{% endif %}>Đã hủy</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                  <input type="hidden" name="app" value="{{ appointment.id }}">
+                  <button type="submit" class="btn btn-dark">
+                    <i class="bi bi-save"></i> Lưu
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-dark">Không có lịch hẹn nào</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+function changeDate(days) {
+  const dateInput = document.getElementById('filterDate');
+  let currentDate = dateInput.value ? new Date(dateInput.value) : new Date();
+  
+  currentDate.setDate(currentDate.getDate() + days);
+  
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  
+  dateInput.value = `${year}-${month}-${day}`;
+  document.getElementById('filterForm').submit();
+}
+</script>
+
+{% endblock %}

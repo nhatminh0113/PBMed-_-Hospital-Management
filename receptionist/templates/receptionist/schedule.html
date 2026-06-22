@@ -1,0 +1,103 @@
+{% extends 'receptionist/base.html' %}
+{% block title %}Lịch làm việc{% endblock %}
+{% block page_title %}Lịch làm việc{% endblock %}
+
+{% block content %}
+<!-- Tuần hiện tại -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h6 class="fw-bold mb-0" style="color:#000;">
+    <i class="bi bi-calendar-week me-2"></i>
+    Tuần từ {{ week_start|date:"d/m/Y" }} → {{ week_end|date:"d/m/Y" }}
+  </h6>
+</div>
+
+<!-- Thống kê theo bác sĩ -->
+<div class="card shadow-sm">
+  <div class="card-header bg-white py-3">
+    <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-person-badge me-2"></i>Bác sĩ & Lịch hẹn trong tuần</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:200px;color:#000;">Bác sĩ</th>
+            <th style="color:#000;">Chuyên khoa</th>
+            {% for d in weekdays %}
+            <th class="text-center" style="color:#000;">
+              {{ d|date:"D" }}<br><small>{{ d|date:"d/m" }}</small>
+            </th>
+            {% endfor %}
+            <th class="text-center" style="color:#000;">Tổng</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in doctor_stats %}
+          <tr>
+            <td style="color:#000;"><strong>{{ stat.user.last_name }} {{ stat.user.first_name }}</strong></td>
+            <td style="color:#000;">{{ stat.specialty.name }}</td>
+            {% for d in weekdays %}
+            <td class="text-center" style="color:#000;">
+              {% if d == today %}
+                <span class="badge bg-primary rounded-pill">{{ stat.today }}</span>
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            {% endfor %}
+            <td class="text-center fw-bold" style="color:#000;">
+              {{ stat.total }}
+              <br><small style="color:#000;">Đã CN: {{ stat.accepted }}</small>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9" class="text-center py-4" style="color:#000;">Không có dữ liệu</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chi tiết lịch hẹn hôm nay -->
+<div class="card shadow-sm mt-4">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-list-task me-2"></i>Lịch hẹn hôm nay ({{ today|date:"d/m/Y" }})</h5>
+    <a href="{% url 'receptionist_appointments' %}" class="btn btn-sm btn-outline-dark">Quản lý</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="color:#000;">Giờ</th>
+            <th style="color:#000;">Bệnh nhân</th>
+            <th style="color:#000;">Bác sĩ</th>
+            <th style="color:#000;">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in appointments_today %}
+          <tr>
+            <td class="fw-bold" style="color:#000;">{{ app.time.time }}</td>
+            <td style="color:#000;">{{ app.patient_profile.full_name }}</td>
+            <td style="color:#000;">{{ app.doctor.user.last_name }} {{ app.doctor.user.first_name }}</td>
+            <td>
+              {% if app.status.status == "Accepted" %}
+                <span class="badge bg-success">Đã xác nhận</span>
+              {% elif app.status.status == "Waited" %}
+                <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+              {% elif app.status.status == "Cancelled" %}
+                <span class="badge bg-danger">Đã hủy</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center py-4" style="color:#000;">Hôm nay không có lịch hẹn</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

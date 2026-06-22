@@ -1,0 +1,42 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Quên mật khẩu{% endblock title %}
+
+{% block content %}
+<div class="card shadow-lg">
+  <div class="card-body p-5">
+    {% if errorlogin %}
+  <div class="alert alert-danger" role="alert">
+    Thông tin không chính xác
+  </div>
+  {% endif %}
+  {% if send_email_succes %}
+      <div class="alert alert-success" role="alert">
+        Email đã được gửi
+      </div>
+    {% endif %}
+    <h1 class="fs-4 card-title fw-bold mb-4">Quên mật khẩu</h1>
+    <form method="POST" class="needs-validation" novalidate="" autocomplete="off">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="mb-2 text-dark" for="email">Địa chỉ Email</label>
+        <input id="email" type="email" class="form-control" name="email" value="" required autofocus />
+        <div class="invalid-feedback">Email không hợp lệ</div>
+      </div>
+
+      <div class="d-flex align-items-center">
+        <button type="submit" class="btn btn-primary ms-auto">
+          Gửi liên kết
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-footer py-3 border-0">
+    <div class="text-center">
+      Nhớ mật khẩu?
+      <a href={% url 'login' %} class="text-dark">Đăng nhập</a>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,51 @@
+{% extends 'patients/base.html' %}
+{% load static %}
+{% block title %}Lịch sử khám{% endblock title %}
+{% block page_title %}Lịch sử khám - {{ profile.full_name }}{% endblock page_title %}
+
+{% block content %}
+<main>
+  <div class="mb-3">
+    <a href="{% url 'profile_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Quay lại hồ sơ</a>
+  </div>
+
+  {% if records %}
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered bg-white shadow-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Ngày khám</th>
+          <th>Bác sĩ</th>
+          <th>Phòng</th>
+          <th>Lý do khám</th>
+          <th>Chẩn đoán</th>
+          <th>Chỉ định CLS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          <td>{{ record.exam_date|date:"d/m/Y H:i" }}</td>
+          <td>Bs. {{ record.doctor.user.last_name }} {{ record.doctor.user.first_name }}</td>
+          <td>{{ record.room|default:"---" }}</td>
+          <td>{{ record.reason|truncatewords:10|default:"---" }}</td>
+          <td>{{ record.diagnosis|truncatewords:10|default:"---" }}</td>
+          <td>
+            {% with cls=record.cls_indications.all %}
+              {% if cls %}
+                <span class="badge bg-info">{{ cls.count }} chỉ định</span>
+              {% else %}
+                <span class="text-dark">---</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">Chưa có lịch sử khám bệnh.</div>
+  {% endif %}
+</main>
+{% endblock %}

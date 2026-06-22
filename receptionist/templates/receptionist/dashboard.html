@@ -1,0 +1,124 @@
+{% extends 'receptionist/base.html' %}
+{% block title %}Bảng điều khiển lễ tân{% endblock %}
+{% block page_title %}Bảng điều khiển{% endblock %}
+
+{% block content %}
+<!-- Thống kê -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left: 4px solid #0d6efd;">
+      <div class="card-body">
+        <p class="mb-1 fw-semibold" style="color:#000;">Lịch hẹn hôm nay</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ total_appointments_today }}</h3>
+        <small style="color:#000;">Đã xác nhận: {{ accepted_today }}</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left: 4px solid #ffc107;">
+      <div class="card-body">
+        <p class="mb-1 fw-semibold" style="color:#000;">Chờ xác nhận</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ waited_today }}</h3>
+        <small style="color:#000;">Cần xử lý</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left: 4px solid #198754;">
+      <div class="card-body">
+        <p class="mb-1 fw-semibold" style="color:#000;">Đã khám</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ examined_today }}</h3>
+        <small style="color:#000;">BN đã có phiếu khám</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left: 4px solid #dc3545;">
+      <div class="card-body">
+        <p class="mb-1 fw-semibold" style="color:#000;">Đã hủy</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ cancelled_today }}</h3>
+        <small style="color:#000;">Hôm nay</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lịch hẹn hôm nay -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-list-task me-2"></i>Lịch hẹn hôm nay ({{ total_appointments_today }})</h5>
+    <a href="{% url 'receptionist_appointments' %}" class="btn btn-sm btn-outline-dark">Xem tất cả</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="color:#000;">Giờ</th>
+            <th style="color:#000;">Bệnh nhân</th>
+            <th style="color:#000;">Bác sĩ</th>
+            <th style="color:#000;">Tóm tắt</th>
+            <th style="color:#000;">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in appointments_today %}
+          <tr onclick="window.location.href='{% url 'receptionist_appointments' %}?filter_status={{ app.status.status }}'" style="cursor:pointer;">
+            <td style="color:#000;" class="fw-bold">{{ app.time.time }}</td>
+            <td style="color:#000;">{{ app.patient_profile.full_name|default:app.patient.user.first_name }}</td>
+            <td style="color:#000;">{{ app.doctor.user.last_name }} {{ app.doctor.user.first_name }}</td>
+            <td style="color:#000;">{{ app.summary|truncatewords:6 }}</td>
+            <td>
+              {% if app.status.status == "Accepted" %}
+                <span class="badge bg-success">Đã xác nhận</span>
+              {% elif app.status.status == "Waited" %}
+                <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+              {% elif app.status.status == "Cancelled" %}
+                <span class="badge bg-danger">Đã hủy</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ app.status.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center py-4" style="color:#000;">Hôm nay không có lịch hẹn nào</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Bác sĩ trực -->
+<div class="card shadow-sm">
+  <div class="card-header bg-white py-3">
+    <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-person-badge me-2"></i>Bác sĩ</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="color:#000;">Bác sĩ</th>
+            <th style="color:#000;">Chuyên khoa</th>
+            <th style="color:#000;">Lịch hẹn hôm nay</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in doctors_available %}
+          <tr onclick="window.location.href='{% url 'receptionist_appointments' %}?filter_doctor={{ doc.user_id }}'" style="cursor:pointer;">
+            <td style="color:#000;">{{ doc.user.last_name }} {{ doc.user.first_name }}</td>
+            <td style="color:#000;">{{ doc.specialty.name }}</td>
+            <td>
+              <span class="fw-bold" style="color:#000;">
+                {{ doc.appointment_set.count }} lịch hẹn
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

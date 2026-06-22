@@ -1,0 +1,75 @@
+{% extends 'patients/base.html' %}
+{% load static %}
+{% block title %}{{ action }} hồ sơ{% endblock title %}
+{% block page_title %}{{ action }} hồ sơ bệnh nhân{% endblock page_title %}
+
+{% block content %}
+<main>
+  <div class="card shadow mx-auto" style="max-width: 600px;">
+    <div class="card-body p-4">
+      <form method="POST">
+        {% csrf_token %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+              {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Họ tên <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="full_name" value="{{ profile.full_name|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="birth_date" value="{{ profile.birth_date|date:'Y-m-d'|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Giới tính</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="gender" value="Male" id="genderMale" {% if profile.gender == 'Male' or not profile %}checked{% endif %}>
+              <label class="form-check-label" for="genderMale">Nam</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="gender" value="Female" id="genderFemale" {% if profile.gender == 'Female' %}checked{% endif %}>
+              <label class="form-check-label" for="genderFemale">Nữ</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Địa chỉ</label>
+          <input type="text" class="form-control mb-2" name="address" value="{{ profile.address|default:'' }}" placeholder="Số nhà, đường, thôn/xóm">
+          <input type="text" class="form-control mb-2" name="ward" value="{{ profile.ward|default:'' }}" placeholder="Phường/Xã">
+          <input type="text" class="form-control" name="city" value="{{ profile.city|default:'' }}" placeholder="Thành phố/Tỉnh">
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">CCCD</label>
+            <input type="text" class="form-control" name="cccd" value="{{ profile.cccd|default:'' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Số điện thoại</label>
+            <input type="text" class="form-control" name="phone" value="{{ profile.phone|default:'' }}">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Bảo hiểm</label>
+          <input type="text" class="form-control" name="insurance" value="{{ profile.insurance|default:'' }}">
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'profile_list' %}" class="btn btn-secondary">Quay lại</a>
+          <button type="submit" class="btn btn-primary primary-color-background">{{ action }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

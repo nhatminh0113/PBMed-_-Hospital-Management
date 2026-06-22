@@ -1,0 +1,143 @@
+{% extends 'administration/base.html' %}
+{% block title %}Danh mục & Cấu hình{% endblock %}
+{% block page_title %}Danh mục & Cấu hình{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Chuyên khoa -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-bookmark me-2"></i>Chuyên khoa</h5>
+        <button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#addSpecialtyModal">
+          <i class="bi bi-plus-lg"></i> Thêm
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th style="width:50px;color:#000;">STT</th><th style="color:#000;">Tên chuyên khoa</th><th style="color:#000;">Mô tả</th><th style="width:80px;color:#000;"></th></tr>
+          </thead>
+          <tbody>
+            {% for s in specialties %}
+            <tr>
+              <td class="fw-bold" style="color:#000;">{{ forloop.counter }}</td>
+              <td style="color:#000;"><strong>{{ s.name }}</strong></td>
+              <td style="color:#000;">{{ s.description|truncatewords:8 }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{% url 'admin_category_edit' 'specialty' s.pk %}" class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil"></i></a>
+                  <form method="post" action="{% url 'admin_category_delete' 'specialty' s.pk %}" class="d-inline" onsubmit="return confirm('Xóa chuyên khoa {{ s.name }}?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-3" style="color:#000;">Chưa có chuyên khoa</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dịch vụ CLS -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-flask me-2"></i>Dịch vụ Cận lâm sàng</h5>
+        <button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#addCLSModal">
+          <i class="bi bi-plus-lg"></i> Thêm
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th style="width:50px;color:#000;">STT</th><th style="color:#000;">Tên dịch vụ</th><th style="color:#000;">Mô tả</th><th style="width:80px;color:#000;"></th></tr>
+          </thead>
+          <tbody>
+            {% for c in cls_services %}
+            <tr>
+              <td class="fw-bold" style="color:#000;">{{ forloop.counter }}</td>
+              <td style="color:#000;"><strong>{{ c.name }}</strong></td>
+              <td style="color:#000;">{{ c.description|truncatewords:8 }}</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{% url 'admin_category_edit' 'cls' c.pk %}" class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil"></i></a>
+                  <form method="post" action="{% url 'admin_category_delete' 'cls' c.pk %}" class="d-inline" onsubmit="return confirm('Xóa dịch vụ {{ c.name }}?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-3" style="color:#000;">Chưa có dịch vụ CLS</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thêm chuyên khoa -->
+<div class="modal fade" id="addSpecialtyModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title">Thêm chuyên khoa</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'admin_category_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="type" value="specialty">
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color:#000;">Tên chuyên khoa <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color:#000;">Mô tả</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-dark">Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thêm dịch vụ CLS -->
+<div class="modal fade" id="addCLSModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title">Thêm dịch vụ CLS</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'admin_category_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" name="type" value="cls">
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color:#000;">Tên dịch vụ <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color:#000;">Mô tả</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-dark">Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

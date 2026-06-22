@@ -1,0 +1,97 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Đăng ký{% endblock title %}
+
+{% block content %}
+<div class="card shadow-lg mx-auto mt-5" style="max-width: 34rem;">
+  <div class="card-body p-4">
+    <h1 class="fs-4 card-title fw-bold mb-3 text-center">Đăng ký tài khoản</h1>
+
+    <form method="POST" class="needs-validation" novalidate="" autocomplete="off">
+      {% csrf_token %}
+
+      {% if messages %}
+        {% for message in messages %}
+          {% if 'success' in message.tags %}
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% else %}
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      <div class="mb-3">
+        <label class="mb-2 text-dark" for="id_user">Tên đăng nhập</label>
+        <input id="id_user" type="text" class="form-control" name="user_id" value="{{ user_id }}" required autofocus />
+        <div class="invalid-feedback">Vui lòng nhập tên đăng nhập</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-dark" for="first_name">Tên</label>
+        <input id="first_name" type="text" class="form-control" name="user_firstname" value="{{ user_firstname }}" required autofocus />
+        <div class="invalid-feedback">Vui lòng nhập tên</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-dark" for="last_name">Họ</label>
+        <input id="last_name" type="text" class="form-control" name="user_lastname" value="{{ user_lastname }}" required autofocus />
+        <div class="invalid-feedback">Vui lòng nhập họ</div>
+      </div>
+      
+      <div class="mb-3">
+        <label class="mb-2 text-dark" for="select_gender">Giới tính</label>
+        <select class="form-select" aria-label="Default select example" name="user_gender" id="select_gender">
+          <option value="Male" {% if user_gender == 'Male' %}selected{% endif %}>Nam</option>
+          <option value="Female" {% if user_gender == 'Female' %}selected{% endif %}>Nữ</option>
+        </select>
+      </div>   
+      
+      <div class="mb-3" >
+        <label class="mb-2 text-dark" for="birthday">Ngày sinh</label>
+        <input id="birthday" type="date" class="form-control" name="birthday" value="{{ birthday }}" required />
+        <div class="invalid-feedback">Ngày sinh không hợp lệ</div>
+      </div>
+      
+      <div class="mb-3" >
+        <label class="mb-2 text-dark" for="email">Địa chỉ Email</label>
+        <input id="email" type="email" class="form-control" name="email" value="{{ email }}" required />
+        <div class="invalid-feedback">Email không hợp lệ</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-dark" for="password">Mật khẩu</label>
+        <input id="password" type="password" class="form-control" name="password" required />
+        <div class="invalid-feedback">Vui lòng nhập mật khẩu</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-dark" for="conf__password">Xác nhận mật khẩu</label>
+        <input id="conf__password" type="password" class="form-control" name="conf_password" required />
+        <div class="invalid-feedback">Vui lòng xác nhận mật khẩu</div>
+      </div>
+
+      <p class="form-text text-dark mb-3">
+        Bằng cách đăng ký, bạn đồng ý với điều khoản của chúng tôi.
+      </p>
+
+      <div class="align-items-center d-flex">
+        <button type="submit" class="btn btn-primary ms-auto primary-color-background">
+          Đăng ký
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="card-footer py-3 border-0">
+    <div class="text-center">
+      Đã có tài khoản?
+      <a href="{% url 'login' %}" class="text-dark secondary-color">Đăng nhập</a>
+    </div>
+  </div>
+</div>
+{% endblock content %}

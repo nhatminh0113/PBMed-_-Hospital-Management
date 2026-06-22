@@ -1,0 +1,54 @@
+{% extends 'patients/base.html' %}
+{% load static %}
+{% block title %}Kết quả CLS{% endblock title %}
+{% block page_title %}Kết quả Cận lâm sàng - {{ profile.full_name }}{% endblock page_title %}
+
+{% block content %}
+<main>
+  <div class="mb-3">
+    <a href="{% url 'profile_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Quay lại hồ sơ</a>
+  </div>
+
+  {% if indications %}
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered bg-white shadow-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Ngày chỉ định</th>
+          <th>Bác sĩ chỉ định</th>
+          <th>Dịch vụ CLS</th>
+          <th>Trạng thái</th>
+          <th>Kết quả</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ind in indications %}
+        <tr>
+          <td>{{ ind.examination_record.exam_date|date:"d/m/Y" }}</td>
+          <td>Bs. {{ ind.examination_record.doctor.user.last_name }} {{ ind.examination_record.doctor.user.first_name }}</td>
+          <td>{{ ind.cls_service.name }}</td>
+          <td>
+            {% if ind.status == 'completed' %}
+              <span class="badge bg-success">Đã có kết quả</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Chờ kết quả</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if ind.status == 'completed' %}
+              {{ ind.result|default:"---" }}
+              <br><small class="text-dark">{{ ind.result_date|date:"d/m/Y H:i" }}</small>
+            {% else %}
+              <span class="text-dark">Đang chờ</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">Chưa có chỉ định CLS nào.</div>
+  {% endif %}
+</main>
+{% endblock %}

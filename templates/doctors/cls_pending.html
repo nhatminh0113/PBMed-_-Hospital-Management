@@ -1,0 +1,41 @@
+{% extends 'doctors/base.html' %}
+{% load static %}
+{% block title %}CLS chờ kết quả{% endblock title %}
+{% block page_title %}Cận lâm sàng - Chờ kết quả{% endblock page_title %}
+
+{% block content %}
+<main>
+  {% if indications %}
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered bg-white shadow-sm">
+      <thead class="table-warning">
+        <tr>
+          <th>Bệnh nhân</th>
+          <th>Bác sĩ chỉ định</th>
+          <th>Dịch vụ CLS</th>
+          <th>Ngày chỉ định</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ind in indications %}
+        <tr>
+          <td><strong>{{ ind.examination_record.patient_profile.full_name }}</strong></td>
+          <td>Bs. {{ ind.examination_record.doctor.user.last_name }} {{ ind.examination_record.doctor.user.first_name }}</td>
+          <td>{{ ind.cls_service.name }}</td>
+          <td>{{ ind.examination_record.exam_date|date:"d/m/Y" }}</td>
+          <td>
+            <a href="{% url 'cls_update_result' ind.id %}" class="btn btn-sm btn-primary">
+              <i class="bi bi-pencil"></i> Nhập kết quả
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-success"><i class="bi bi-check-circle"></i> Không có chỉ định CLS nào đang chờ kết quả.</div>
+  {% endif %}
+</main>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'receptionist/base.html' %}
+{% block title %}Quản lý lịch hẹn{% endblock %}
+{% block page_title %}Quản lý lịch hẹn{% endblock %}
+
+{% block content %}
+<!-- Bộ lọc -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label fw-bold" style="color:#000;">Trạng thái</label>
+        <select name="filter_status" class="form-select">
+          <option value="">Tất cả</option>
+          {% for s in statuses %}
+          <option value="{{ s.status }}" {% if filter_status == s.status %}selected{% endif %}>
+            {% if s.status == "Accepted" %}Đã xác nhận{% elif s.status == "Waited" %}Chờ xác nhận{% elif s.status == "Cancelled" %}Đã hủy{% else %}{{ s.status }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold" style="color:#000;">Ngày</label>
+        <input type="date" name="filter_date" class="form-control" value="{{ filter_date|default:'' }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold" style="color:#000;">Bác sĩ</label>
+        <select name="filter_doctor" class="form-select">
+          <option value="">Tất cả</option>
+          {% for doc in doctors %}
+          <option value="{{ doc.user.id }}" {% if filter_doctor|stringformat:"s" == doc.user.id|stringformat:"s" %}selected{% endif %}>
+            {{ doc.user.last_name }} {{ doc.user.first_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-dark w-100"><i class="bi bi-search"></i> Lọc</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Danh sách lịch hẹn -->
+<div class="card shadow-sm">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-calendar-check me-2"></i>Danh sách lịch hẹn</h5>
+    <a href="{% url 'receptionist_walkin' %}" class="btn btn-dark btn-sm"><i class="bi bi-plus-lg"></i> Đăng ký khám</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:50px;color:#000;">STT</th>
+            <th style="color:#000;">Bệnh nhân</th>
+            <th style="color:#000;">Bác sĩ</th>
+            <th style="color:#000;">Ngày</th>
+            <th style="color:#000;">Giờ</th>
+            <th style="color:#000;">Tóm tắt</th>
+            <th style="color:#000;">Trạng thái</th>
+            <th style="width:160px;color:#000;">Xử lý</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in appointments %}
+          <tr>
+            <td class="fw-bold" style="color:#000;">{{ forloop.counter }}</td>
+            <td style="color:#000;">{{ app.patient_profile.full_name|default:app.patient.user.first_name }}</td>
+            <td style="color:#000;">{{ app.doctor.user.last_name }} {{ app.doctor.user.first_name }}</td>
+            <td style="color:#000;">{{ app.start_date|date:"d/m/Y" }}</td>
+            <td style="color:#000;">{{ app.time.time }}</td>
+            <td style="color:#000;">{{ app.summary|truncatewords:6 }}</td>
+            <td>
+              {% if app.status.status == "Accepted" %}
+                <span class="badge bg-success">Đã xác nhận</span>
+              {% elif app.status.status == "Waited" %}
+                <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+              {% elif app.status.status == "Cancelled" %}
+                <span class="badge bg-danger">Đã hủy</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="app_id" value="{{ app.id }}">
+                {% if app.status.status == "Waited" %}
+                <button type="submit" name="action" value="confirm" class="btn btn-sm btn-success" onclick="return confirm('Xác nhận lịch hẹn này?')">
+                  <i class="bi bi-check-lg"></i> Xác nhận
+                </button>
+                {% endif %}
+                {% if app.status.status != "Cancelled" %}
+                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ app.id }}">
+                  <i class="bi bi-x-lg"></i> Hủy
+                </button>
+                {% endif %}
+              </form>
+
+              <!-- Modal hủy -->
+              <div class="modal fade" id="cancelModal{{ app.id }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                      <h6 class="modal-title">Hủy lịch hẹn</h6>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post">
+                      {% csrf_token %}
+                      <div class="modal-body">
+                        <p style="color:#000;">Hủy lịch hẹn của <strong>{{ app.patient_profile.full_name }}</strong>?</p>
+                        <div class="mb-3">
+                          <label class="form-label fw-bold" style="color:#000;">Lý do hủy</label>
+                          <textarea name="reason" class="form-control" rows="2" required></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <input type="hidden" name="app_id" value="{{ app.id }}">
+                        <button type="submit" name="action" value="cancel" class="btn btn-danger">Xác nhận hủy</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center py-4" style="color:#000;">Không có lịch hẹn nào</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

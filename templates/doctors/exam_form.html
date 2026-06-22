@@ -1,0 +1,101 @@
+{% extends 'doctors/base.html' %}
+{% load static %}
+{% block title %}Tạo phiếu khám{% endblock title %}
+{% block page_title %}Tạo phiếu khám{% endblock page_title %}
+
+{% block content %}
+<main>
+  <div class="card shadow mb-3">
+    <div class="card-body">
+      <h5 class="fw-bold">Thông tin bệnh nhân</h5>
+      <table class="table table-borderless mb-0">
+        <tr><td style="width:150px"><strong>Họ tên:</strong></td><td>{{ profile.full_name }}</td></tr>
+        <tr><td><strong>Năm sinh:</strong></td><td>{{ profile.birth_year }}</td></tr>
+        <tr><td><strong>Giới tính:</strong></td><td>{{ profile.get_gender_display }}</td></tr>
+        <tr><td><strong>CCCD:</strong></td><td>{{ profile.cccd|default:"---" }}</td></tr>
+        <tr><td><strong>Bảo hiểm:</strong></td><td>{{ profile.insurance|default:"---" }}</td></tr>
+        <tr><td><strong>Ngày hẹn:</strong></td><td>{{ appointment.start_date|date:"d/m/Y" }} - {{ appointment.time.time }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <form method="POST">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="card shadow mb-3">
+      <div class="card-header bg-primary text-white fw-bold">1. Hành chính</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Phòng khám</label>
+          <input type="text" class="form-control" name="room" placeholder="VD: Phòng 101">
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow mb-3">
+      <div class="card-header bg-success text-white fw-bold">2. Khám lâm sàng</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Lý do khám</label>
+          <textarea class="form-control" name="reason" rows="2"></textarea>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Bệnh sử</label>
+            <textarea class="form-control" name="medical_history" rows="2"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tiền sử</label>
+            <textarea class="form-control" name="family_history" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-3"><label class="form-label fw-bold">Mạch</label><input type="text" class="form-control" name="pulse" placeholder="lần/phút"></div>
+          <div class="col-md-3"><label class="form-label fw-bold">Nhiệt độ</label><input type="text" class="form-control" name="temperature" placeholder="°C"></div>
+          <div class="col-md-3"><label class="form-label fw-bold">Huyết áp</label><input type="text" class="form-control" name="blood_pressure" placeholder="mmHg"></div>
+          <div class="col-md-3"><label class="form-label fw-bold">Cân nặng</label><input type="text" class="form-control" name="weight" placeholder="kg"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Tình trạng sức khỏe các cơ quan</label>
+          <textarea class="form-control" name="health_status" rows="3" placeholder="Nhận xét về các cơ quan: tim, phổi, gan, thận..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow mb-3">
+      <div class="card-header bg-warning text-dark fw-bold">3. Chỉ định & Chẩn đoán</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Chẩn đoán</label>
+          <textarea class="form-control" name="diagnosis" rows="2" placeholder="Nhập chẩn đoán..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Chỉ định CLS</label>
+          <div class="row">
+            {% for cls in cls_services %}
+            <div class="col-md-4 col-sm-6 mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="cls_services" value="{{ cls.id }}" id="cls_{{ cls.id }}">
+                <label class="form-check-label" for="cls_{{ cls.id }}">{{ cls.name }}</label>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mb-5">
+      <a href="{% url 'doctor_exam_list' %}" class="btn btn-secondary">Quay lại</a>
+      <button type="submit" class="btn btn-primary primary-color-background px-4"><i class="bi bi-save"></i> Lưu phiếu khám</button>
+    </div>
+  </form>
+</main>
+{% endblock %}

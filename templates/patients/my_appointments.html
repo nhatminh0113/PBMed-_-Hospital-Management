@@ -1,0 +1,94 @@
+{% extends 'patients/base.html' %}
+{% load static %}
+
+{% block title %} Hồ sơ {% endblock title %}
+{% block page_title %} Lịch hẹn của tôi {% endblock page_title %}
+
+{% block content %}
+<main>
+    {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+    {% endif %}
+    <section class="recent">
+        <div class="filter-section my-2">
+            <form method="get" class="d-md-flex justify-content-between align-items-center text-dark">
+                <div class="form-group mr-3">
+                    <label for="filter_status" class="mr-2">Trạng thái:</label>
+                    <select name="filter_status" id="filter_status" class="form-control form-select">
+                        <option value="" {% if not filter_status or filter_status == 'All' %}selected{% endif %}>Tất cả</option>
+                        <option value="Accepted" {% if filter_status == "Accepted" %}selected{% endif %}>Đã chấp nhận</option>
+                        <option value="Waited" {% if filter_status == "Waited" %}selected{% endif %}>Đang chờ</option>
+                        <option value="Cancelled" {% if filter_status == "Cancelled" %}selected{% endif %}>Đã hủy</option>                  
+                    </select>
+                </div>
+                <div class="form-group mr-3">
+                    <label for="filter_date" class="mr-2">Ngày:</label>
+                    <input type="date" name="filter_date" id="filter_date" class="form-control" value="{{ filter_date }}">
+                </div>
+                <div class="form-group mr-3">
+                    <label for="filter_doctor_name" class="mr-2">Tên bác sĩ:</label>
+                    <input type="text" name="filter_doctor_name" id="filter_doctor_name" class="form-control" value="{% if filter_doctor_name is not None %}{{ filter_doctor_name }}{% endif %}">
+                </div>
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            </form>
+        </div>
+        <div class="table-div">
+            <div class="table-card">
+                <div class="tab-content pt-0">
+                    <div id="pat_appointments" class="tab-pane fade show active">
+                        <div class="card card-table mb-0">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-center mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Bác sĩ</th>
+                                                <th>Ngày hẹn</th>
+                                                <th>Giờ bắt đầu</th>
+                                                <th>Tóm tắt</th>
+                                                <th>Trạng thái</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for appointment in appointments %}
+                                            <tr>
+                                                <td>
+                                                    <b style="color:#000;">Bs. {{ appointment.doctor.user.last_name }} {{ appointment.doctor.user.first_name }}</b>
+                                                </td>
+                                                <td><span class="d-block" style="font-size:16px;">{{ appointment.start_date|date:'d/m/Y' }}</span></td>
+                                                <td><span class="d-block" style="font-size:16px;">{{ appointment.time.time }}</span></td>
+                                                <td><span class="d-block" style="font-size:16px;">{{ appointment.summary }}</span></td>
+                                            
+                                                <td>
+                                                    {% if appointment.status.status == "Accepted" %}
+                                                        <span class="badge bg-success text-white" style="height:22px;font-size:14px;">Đã chấp nhận</span>
+                                                    {% elif appointment.status.status == "Waited" %}
+                                                        <span class="badge badge-pill bg-warning text-white" style="height:22px;font-size:14px;">Đang chờ</span>
+                                                    {% elif appointment.status.status == "Cancelled" %}
+                                                        <span class="badge badge-pill bg-danger text-white" style="height:22px;font-size:14px;">Đã hủy</span>
+                                                    {% else %}
+                                                        <span class="badge badge-pill bg-secondary" style="height:22px;font-size:14px;">{{appointment.status.status}}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-right">
+                                                    
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

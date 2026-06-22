@@ -1,0 +1,112 @@
+{% extends 'doctors/base.html' %}
+{% load static %}
+{% block title %}Phiếu khám{% endblock title %}
+{% block page_title %}Chi tiết bệnh án điện tử{% endblock page_title %}
+
+{% block content %}
+<main>
+  <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+      <a href="{% url 'doctor_exam_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> DS khám</a>
+      <a href="{% url 'doctor_patient_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people"></i> DS bệnh nhân</a>
+    </div>
+    <div>
+      <a href="{% url 'doctor_exam_edit' record.id %}" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> Chỉnh sửa</a>
+      <a href="{% url 'doctor_add_cls' record.id %}" class="btn btn-info btn-sm text-white"><i class="bi bi-plus-circle"></i> Thêm CLS</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Patient Info Header -->
+  <div class="card shadow mb-3 border-0 bg-light">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <h4 class="fw-bold mb-1">{{ record.patient_profile.full_name }}</h4>
+          <p class="mb-1 text-dark">
+            Mã BN: <strong>BN-{{ record.patient_profile.id }}</strong> |
+            Năm sinh: {{ record.patient_profile.birth_year }} |
+            Giới tính: {{ record.patient_profile.get_gender_display }}
+          </p>
+          <p class="mb-0 text-dark small">
+            Địa chỉ: {{ record.patient_profile.address }}{% if record.patient_profile.ward %}, {{ record.patient_profile.ward }}{% endif %}{% if record.patient_profile.city %}, {{ record.patient_profile.city }}{% endif %}
+            {% if record.patient_profile.phone %} | SĐT: {{ record.patient_profile.phone }}{% endif %}
+          </p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <p class="mb-1"><strong>Bác sĩ:</strong> {{ record.doctor.user.last_name }} {{ record.doctor.user.first_name }}</p>
+          <p class="mb-1"><strong>Phòng:</strong> {{ record.room|default:"---" }}</p>
+          <p class="mb-0"><strong>Ngày khám:</strong> {{ record.exam_date|date:"d/m/Y H:i" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow h-100">
+        <div class="card-header bg-success text-white fw-bold"><i class="bi bi-clipboard-pulse"></i> Khám lâm sàng</div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless mb-0">
+            <tr><td style="width:120px"><strong>Lý do khám:</strong></td><td>{{ record.reason|default:"---"|linebreaks }}</td></tr>
+            <tr><td><strong>Bệnh sử:</strong></td><td>{{ record.medical_history|default:"---"|linebreaks }}</td></tr>
+            <tr><td><strong>Tiền sử:</strong></td><td>{{ record.family_history|default:"---"|linebreaks }}</td></tr>
+          </table>
+          <hr>
+          <div class="row text-center">
+            <div class="col-3"><small class="text-dark">Mạch</small><br><strong>{{ record.pulse|default:"---" }}</strong></div>
+            <div class="col-3"><small class="text-dark">Nhiệt độ</small><br><strong>{{ record.temperature|default:"---" }}</strong></div>
+            <div class="col-3"><small class="text-dark">Huyết áp</small><br><strong>{{ record.blood_pressure|default:"---" }}</strong></div>
+            <div class="col-3"><small class="text-dark">Cân nặng</small><br><strong>{{ record.weight|default:"---" }}</strong></div>
+          </div>
+          <hr>
+          <div><strong>Tình trạng cơ quan:</strong><br>{{ record.health_status|default:"---"|linebreaks }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow h-100">
+        <div class="card-header bg-warning text-dark fw-bold"><i class="bi bi-file-earmark-text"></i> Chẩn đoán & Chỉ định</div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>Chẩn đoán:</strong>
+            <div class="p-2 bg-light rounded mt-1">{{ record.diagnosis|default:"---"|linebreaks }}</div>
+          </div>
+          <div>
+            <strong>Chỉ định CLS:</strong>
+            {% with cls=record.cls_indications.all %}
+              {% if cls %}
+              <ul class="list-group list-group-flush mt-2">
+                {% for c in cls %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                  <div>
+                    <strong>{{ c.cls_service.name }}</strong>
+                    {% if c.status == 'completed' and c.result %}
+                      <br><small class="text-success">{{ c.result }}</small>
+                    {% endif %}
+                  </div>
+                  <span class="badge {% if c.status == 'completed' %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill">
+                    {% if c.status == 'completed' %}Đã có KQ{% else %}Chờ KQ{% endif %}
+                  </span>
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p class="text-dark mt-2">Không có chỉ định CLS.</p>
+              {% endif %}
+            {% endwith %}
+            <div class="mt-2">
+              <a href="{% url 'doctor_add_cls' record.id %}" class="btn btn-sm btn-outline-info"><i class="bi bi-plus"></i> Thêm chỉ định CLS</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'administration/base.html' %}
+{% block title %}Báo cáo thống kê{% endblock %}
+{% block page_title %}Báo cáo thống kê{% endblock %}
+
+{% block content %}
+<!-- Nút xuất báo cáo -->
+<div class="d-flex gap-2 flex-wrap mb-4">
+  <a href="{% url 'admin_report_export' 'appointments' %}" class="btn btn-outline-dark"><i class="bi bi-download"></i> Xuất lịch hẹn (CSV)</a>
+  <a href="{% url 'admin_report_export' 'patients' %}" class="btn btn-outline-dark"><i class="bi bi-download"></i> Xuất bệnh nhân (CSV)</a>
+  <a href="{% url 'admin_report_export' 'examinations' %}" class="btn btn-outline-dark"><i class="bi bi-download"></i> Xuất phiếu khám (CSV)</a>
+</div>
+
+<div class="row g-4">
+  <!-- Biểu đồ 12 tháng -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-graph-up me-2"></i>Lịch hẹn & Phiếu khám theo tháng</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="color:#000;">Tháng</th>
+                {% for m in months_data %}
+                <th class="text-center" style="color:#000;">{{ m.label }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:#000;"><strong>Lịch hẹn</strong></td>
+                {% for m in months_data %}
+                <td class="text-center" style="color:#000;">{{ m.apps }}</td>
+                {% endfor %}
+              </tr>
+              <tr>
+                <td style="color:#000;"><strong>Phiếu khám</strong></td>
+                {% for m in months_data %}
+                <td class="text-center" style="color:#000;">{{ m.exams }}</td>
+                {% endfor %}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trạng thái lịch hẹn -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-pie-chart me-2"></i>Trạng thái lịch hẹn</h5>
+      </div>
+      <div class="card-body">
+        {% for s in status_counts %}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span style="color:#000;">
+            {% if s.status__status == 'Accepted' %}✅ Đã xác nhận
+            {% elif s.status__status == 'Waited' %}⏳ Chờ xác nhận
+            {% elif s.status__status == 'Cancelled' %}❌ Đã hủy
+            {% else %}{{ s.status__status }}{% endif %}
+          </span>
+          <span class="badge bg-dark rounded-pill">{{ s.count }}</span>
+        </div>
+        {% empty %}
+        <p style="color:#000;" class="mb-0">Chưa có dữ liệu</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Thống kê theo khoa -->
+<div class="card shadow-sm mt-4">
+  <div class="card-header bg-white py-3">
+    <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-building me-2"></i>Thống kê theo khoa</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="color:#000;">Chuyên khoa</th>
+            <th class="text-center" style="color:#000;">Bác sĩ</th>
+            <th class="text-center" style="color:#000;">Lượt khám</th>
+            <th class="text-center" style="color:#000;">Chỉ định CLS</th>
+            <th class="text-center" style="color:#000;">Tỷ lệ CLS/Khám</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in specialty_exams %}
+          <tr>
+            <td style="color:#000;"><strong>{{ s.name }}</strong></td>
+            <td class="text-center" style="color:#000;">{{ s.doctor_count }}</td>
+            <td class="text-center"><span class="fw-bold" style="color:#000;">{{ s.exam_count }}</span></td>
+            <td class="text-center" style="color:#000;">{{ s.cls_count }}</td>
+            <td class="text-center" style="color:#000;">
+              {% if s.exam_count > 0 %}
+                {{ s.cls_count|floatformat:0 }}/{{ s.exam_count }}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center py-3" style="color:#000;">Chưa có dữ liệu</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Thống kê CLS -->
+<div class="card shadow-sm mt-4">
+  <div class="card-header bg-white py-3">
+    <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-flask me-2"></i>Thống kê dịch vụ Cận lâm sàng</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="color:#000;">Dịch vụ</th>
+            <th class="text-center" style="color:#000;">Tổng chỉ định</th>
+            <th class="text-center" style="color:#000;">Đã có KQ</th>
+            <th class="text-center" style="color:#000;">Chờ KQ</th>
+            <th class="text-center" style="color:#000;">Tỷ lệ hoàn thành</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cls_service_stats %}
+          <tr>
+            <td style="color:#000;"><strong>{{ c.name }}</strong></td>
+            <td class="text-center" style="color:#000;">{{ c.total }}</td>
+            <td class="text-center"><span class="text-success fw-bold">{{ c.completed }}</span></td>
+            <td class="text-center">
+              {% if c.pending > 0 %}
+              <span class="text-warning fw-bold">{{ c.pending }}</span>
+              {% else %}
+              <span style="color:#000;">0</span>
+              {% endif %}
+            </td>
+            <td class="text-center" style="color:#000;">
+              {% if c.total > 0 %}
+              <div class="progress" style="height:20px;">
+                <div class="progress-bar bg-success" style="width:{{ c.completed|floatformat:0 }}%">
+                  {{ c.completed|floatformat:0 }}%
+                </div>
+              </div>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center py-3" style="color:#000;">Chưa có dữ liệu</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

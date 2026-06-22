@@ -1,0 +1,87 @@
+{% extends 'doctors/base.html' %}
+{% load static %}
+{% block title %}Khám bệnh{% endblock title %}
+{% block page_title %}Khám bệnh{% endblock page_title %}
+
+{% block content %}
+<main>
+  <h5 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle"></i> Chờ khám</h5>
+  {% if not_examined %}
+  <div class="table-responsive mb-4">
+    <table class="table table-hover table-bordered bg-white shadow-sm">
+      <thead class="table-danger">
+        <tr>
+          <th>Bệnh nhân</th>
+          <th>Ngày hẹn</th>
+          <th>Giờ</th>
+          <th>Tóm tắt</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in not_examined %}
+        <tr>
+          <td>
+            <strong>{{ app.patient_profile.full_name|default:app.patient.user.first_name }}</strong>
+            <br><small class="text-dark">PID: {{ app.patient.user.username }}</small>
+          </td>
+          <td>{{ app.start_date|date:"d/m/Y" }}</td>
+          <td>{{ app.time.time }}</td>
+          <td>{{ app.summary|truncatewords:10 }}</td>
+          <td>
+            <a href="{% url 'doctor_exam_create' app.id %}" class="btn btn-sm btn-success">
+              <i class="bi bi-file-plus"></i> Khám
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-success">Không có bệnh nhân chờ khám.</div>
+  {% endif %}
+
+  <h5 class="fw-bold text-primary mb-3 mt-4"><i class="bi bi-check-circle"></i> Đã khám</h5>
+  {% if examined %}
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered bg-white shadow-sm">
+      <thead class="table-primary">
+        <tr>
+          <th>Bệnh nhân</th>
+          <th>Ngày khám</th>
+          <th>Chẩn đoán</th>
+          <th>CLS</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in examined %}
+          {% with exam=app.examinationrecord_set.first %}
+          <tr>
+            <td><strong>{{ app.patient_profile.full_name|default:app.patient.user.first_name }}</strong></td>
+            <td>{{ exam.exam_date|date:"d/m/Y H:i" }}</td>
+            <td>{{ exam.diagnosis|truncatewords:8|default:"---" }}</td>
+            <td>
+              {% with cls=exam.cls_indications.all %}
+                {% if cls %}
+                  {% for c in cls %}
+                    <span class="badge {% if c.status == 'completed' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ c.cls_service.name }}</span>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-dark">---</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+            <td><a href="{% url 'doctor_exam_detail' exam.id %}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a></td>
+          </tr>
+          {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info">Chưa có bệnh nhân nào được khám.</div>
+  {% endif %}
+</main>
+{% endblock %}

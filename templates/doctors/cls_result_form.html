@@ -1,0 +1,29 @@
+{% extends 'doctors/base.html' %}
+{% load static %}
+{% block title %}Nhập kết quả CLS{% endblock title %}
+{% block page_title %}Nhập kết quả CLS{% endblock page_title %}
+
+{% block content %}
+<main>
+  <div class="card shadow mx-auto" style="max-width: 600px;">
+    <div class="card-body">
+      <h5 class="fw-bold">{{ indication.cls_service.name }}</h5>
+      <p class="mb-1"><strong>Bệnh nhân:</strong> {{ indication.examination_record.patient_profile.full_name }}</p>
+      <p class="mb-1"><strong>Bác sĩ chỉ định:</strong> Bs. {{ indication.examination_record.doctor.user.last_name }} {{ indication.examination_record.doctor.user.first_name }}</p>
+      <p class="mb-3"><strong>Ngày chỉ định:</strong> {{ indication.examination_record.exam_date|date:"d/m/Y" }}</p>
+
+      <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label fw-bold">Kết quả</label>
+          <textarea class="form-control" name="result" rows="5" placeholder="Nhập kết quả xét nghiệm / chụp chiếu..."></textarea>
+        </div>
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'cls_pending_list' %}" class="btn btn-secondary">Quay lại</a>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Hoàn thành</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends 'administration/base.html' %}
+{% block title %}Bảng điều khiển quản trị{% endblock %}
+{% block page_title %}Bảng điều khiển hệ thống{% endblock %}
+
+{% block content %}
+<!-- Thống kê tổng quan -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-2 col-md-4 col-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left:4px solid #0d6efd;">
+      <div class="card-body">
+        <p class="mb-0 fw-semibold" style="color:#000;font-size:13px;">Bác sĩ</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ total_doctors }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-2 col-md-4 col-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left:4px solid #198754;">
+      <div class="card-body">
+        <p class="mb-0 fw-semibold" style="color:#000;font-size:13px;">Bệnh nhân</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ total_patients }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-2 col-md-4 col-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left:4px solid #6f42c1;">
+      <div class="card-body">
+        <p class="mb-0 fw-semibold" style="color:#000;font-size:13px;">Lễ tân</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ total_receptionists }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-2 col-md-4 col-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left:4px solid #0dcaf0;">
+      <div class="card-body">
+        <p class="mb-0 fw-semibold" style="color:#000;font-size:13px;">Lịch hẹn</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ total_appointments }}</h3>
+        <small style="color:#000;">Tháng: {{ app_month }}</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-2 col-md-4 col-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left:4px solid #fd7e14;">
+      <div class="card-body">
+        <p class="mb-0 fw-semibold" style="color:#000;font-size:13px;">Phiếu khám</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ total_examined }}</h3>
+        <small style="color:#000;">Tháng: {{ exam_month }}</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-2 col-md-4 col-6">
+    <div class="card shadow-sm h-100 stat-card" style="border-left:4px solid #dc3545;">
+      <div class="card-body">
+        <p class="mb-0 fw-semibold" style="color:#000;font-size:13px;">CLS chờ KQ</p>
+        <h3 class="fw-bold mb-0" style="color:#000;">{{ total_pending_cls }}</h3>
+        <small style="color:#000;">Tổng: {{ total_cls }}</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Top bác sĩ -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-trophy me-2"></i>Bác sĩ có nhiều bệnh nhân nhất</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th style="color:#000;">Bác sĩ</th><th style="color:#000;">Chuyên khoa</th><th class="text-center" style="color:#000;">Đã khám</th></tr>
+          </thead>
+          <tbody>
+            {% for doc in top_doctors %}
+            <tr>
+              <td style="color:#000;"><strong>{{ doc.user.last_name }} {{ doc.user.first_name }}</strong></td>
+              <td style="color:#000;">{{ doc.specialty.name }}</td>
+              <td class="text-center"><span class="badge bg-primary rounded-pill">{{ doc.total_exams }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center py-3" style="color:#000;">Chưa có dữ liệu</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thống kê theo khoa -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-building me-2"></i>Thống kê theo khoa</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th style="color:#000;">Chuyên khoa</th><th class="text-center" style="color:#000;">Bác sĩ</th><th class="text-center" style="color:#000;">Lượt khám</th></tr>
+          </thead>
+          <tbody>
+            {% for s in specialty_stats %}
+            <tr>
+              <td style="color:#000;"><strong>{{ s.name }}</strong></td>
+              <td class="text-center" style="color:#000;">{{ s.doctor_count }}</td>
+              <td class="text-center"><span class="badge bg-success rounded-pill">{{ s.exam_count }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center py-3" style="color:#000;">Chưa có dữ liệu</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hôm nay -->
+<div class="row g-3 mt-1">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-calendar-day me-2"></i>Hôm nay ({{ today|date:"d/m/Y" }})</h5>
+        <small style="color:#000;">{{ app_today }} lịch hẹn • {{ exam_today }} khám</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0" style="color:#000;"><i class="bi bi-lightning me-2"></i>Truy cập nhanh</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'admin_users' %}" class="btn btn-outline-dark"><i class="bi bi-people"></i> Tài khoản</a>
+          <a href="{% url 'admin_categories' %}" class="btn btn-outline-dark"><i class="bi bi-gear"></i> Danh mục</a>
+          <a href="{% url 'admin_reports' %}" class="btn btn-outline-dark"><i class="bi bi-bar-chart"></i> Báo cáo</a>
+          <a href="{% url 'admin_user_create' %}" class="btn btn-dark"><i class="bi bi-plus-lg"></i> Thêm tài khoản</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

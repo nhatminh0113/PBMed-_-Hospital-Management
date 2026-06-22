@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtualenv
+venv/
+.env
+
+# Database (xoá db.sqlite3 khi push lên git,
+# dùng `python manage.py setup` để tạo lại)
+db.sqlite3
+
+# Media files
+/media/
+
+# Static build
+/assets/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+~$*
+
+# Temp SQL files
+*.sql
+!seed_data.sql
+!seed/
+
+# Hermes temp
+.hermes-tmp.*

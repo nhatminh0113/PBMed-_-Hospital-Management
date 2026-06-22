@@ -1,0 +1,82 @@
+[
+  {
+    "model": "users.Specialty",
+    "pk": 1,
+    "fields": {
+      "name": "Nội tổng quát",
+      "description": "Khám và điều trị các bệnh nội khoa tổng quát."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 2,
+    "fields": {
+      "name": "Tim mạch",
+      "description": "Khám và điều trị các bệnh về tim mạch."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 3,
+    "fields": {
+      "name": "Da liễu",
+      "description": "Khám và điều trị các bệnh về da, tóc, móng."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 4,
+    "fields": {
+      "name": "Cơ xương khớp",
+      "description": "Khám và điều trị các bệnh về cơ xương khớp."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 5,
+    "fields": {
+      "name": "Tiêu hóa",
+      "description": "Khám và điều trị các bệnh về tiêu hóa."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 6,
+    "fields": {
+      "name": "Thần kinh",
+      "description": "Khám và điều trị các bệnh về thần kinh."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 7,
+    "fields": {
+      "name": "Mắt",
+      "description": "Khám và điều trị các bệnh về mắt."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 8,
+    "fields": {
+      "name": "Nhi khoa",
+      "description": "Khám và điều trị bệnh trẻ em."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 9,
+    "fields": {
+      "name": "Tâm thần",
+      "description": "Khám và điều trị các rối loạn tâm thần."
+    }
+  },
+  {
+    "model": "users.Specialty",
+    "pk": 10,
+    "fields": {
+      "name": "Miễn dịch",
+      "description": "Khám và điều trị các bệnh tự miễn và viêm."
+    }
+  }
+]
