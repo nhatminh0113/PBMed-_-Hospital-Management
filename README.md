@@ -1,15 +1,14 @@
 # PBMed 🏥
 
-**Hospital Management System** — Đồ án I, Học kỳ 2024-2025
+**PBMed-Hospital Management System** 
 
 ---
-
+**Sinh viên:** Hoàng Minh Nhất — **MSSV: 20237468**  
 ## Giới thiệu
 
 Hệ thống quản lý bệnh viện với 4 vai trò: **Admin**, **Bác sĩ**, **Lễ tân**, **Bệnh nhân**.  
 Hỗ trợ đặt lịch hẹn, khám bệnh, chỉ định CLS, thống kê báo cáo.
-
-**Sinh viên:** Hoàng Minh Nhất — **MSSV: 20237468**  
+ 
 **Công nghệ:** Django 5.2 + MySQL 9.3 + Bootstrap 5.3
 
 ---
@@ -94,6 +93,5 @@ PBMed/
 
 ## Ghi chú
 
-- `venv/` không được push lên GitHub (đã có .gitignore)
 - Dữ liệu demo được backup trong `seed_data.sql`
 - Chạy `python manage.py setup` để tạo lại dữ liệu mẫu
