@@ -10,7 +10,7 @@ build/
 venv/
 .env
 
-# Database (xoá db.sqlite3 khi push lên git,
+
 # dùng `python manage.py setup` để tạo lại)
 db.sqlite3
 
@@ -36,5 +36,4 @@ Thumbs.db
 !seed_data.sql
 !seed/
 
-# Hermes temp
-.hermes-tmp.*
+
