@@ -31,9 +31,5 @@ Thumbs.db
 .DS_Store
 ~$*
 
-# Temp SQL files
-*.sql
-!seed_data.sql
-!seed/
-
-
+# Hermes temp files
+.hermes-tmp.*

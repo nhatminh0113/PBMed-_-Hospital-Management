@@ -66,13 +66,15 @@
                                             
                                                 <td>
                                                     {% if appointment.status.status == "Accepted" %}
-                                                        <span class="badge bg-success text-white" style="height:22px;font-size:14px;">Đã chấp nhận</span>
+                                                        <span class="badge bg-warning text-dark" style="height:22px;font-size:14px;">Chờ khám</span>
                                                     {% elif appointment.status.status == "Waited" %}
-                                                        <span class="badge badge-pill bg-warning text-white" style="height:22px;font-size:14px;">Đang chờ</span>
+                                                        <span class="badge bg-info text-dark" style="height:22px;font-size:14px;">Chờ xác nhận</span>
                                                     {% elif appointment.status.status == "Cancelled" %}
-                                                        <span class="badge badge-pill bg-danger text-white" style="height:22px;font-size:14px;">Đã hủy</span>
+                                                        <span class="badge bg-danger text-white" style="height:22px;font-size:14px;">Đã hủy</span>
+                                                    {% elif appointment.status.status == "Da kham" %}
+                                                        <span class="badge bg-success text-white" style="height:22px;font-size:14px;">Đã khám</span>
                                                     {% else %}
-                                                        <span class="badge badge-pill bg-secondary" style="height:22px;font-size:14px;">{{appointment.status.status}}</span>
+                                                        <span class="badge bg-secondary" style="height:22px;font-size:14px;">{{appointment.status.status}}</span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="text-right">

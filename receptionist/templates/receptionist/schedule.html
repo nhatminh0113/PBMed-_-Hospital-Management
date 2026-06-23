@@ -80,15 +80,17 @@
           {% for app in appointments_today %}
           <tr>
             <td class="fw-bold" style="color:#000;">{{ app.time.time }}</td>
-            <td style="color:#000;">{{ app.patient_profile.full_name }}</td>
+            <td style="color:#000;">{{ app.patient_profile.full_name|default:app.patient.user.first_name }}</td>
             <td style="color:#000;">{{ app.doctor.user.last_name }} {{ app.doctor.user.first_name }}</td>
             <td>
               {% if app.status.status == "Accepted" %}
-                <span class="badge bg-success">Đã xác nhận</span>
+                <span class="badge bg-warning text-dark">Chờ khám</span>
               {% elif app.status.status == "Waited" %}
                 <span class="badge bg-warning text-dark">Chờ xác nhận</span>
               {% elif app.status.status == "Cancelled" %}
                 <span class="badge bg-danger">Đã hủy</span>
+              {% elif app.status.status == "Da kham" %}
+                <span class="badge bg-success">Đã khám</span>
               {% endif %}
             </td>
           </tr>

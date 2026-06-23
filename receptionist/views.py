@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db.models import Count, Q
 from datetime import date, timedelta
 from django.utils import timezone
+import uuid
 
 from patients.models import Appointment, Status, PatientProfile, ExaminationRecord
 from users.models import Doctors, Patients, Specialty, ReceptionistProfile
@@ -102,24 +103,27 @@ def walkin(request):
         time_str = request.POST.get('time')
 
         if not all([name, phone, birth_year, doctor_id, start_date, time_str]):
-            messages.error(request, 'Vui lòng điền đầy đủ thông tin.')
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin (họ tên, SĐT, năm sinh, bác sĩ, ngày, giờ).')
             return render(request, 'receptionist/walkin.html', {
                 'doctors': doctors, 'times': times, 'form_data': request.POST,
             })
 
-        username = f'bn_{phone}'
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={
-                'first_name': name.split()[-1] if len(name.split()) > 1 else name,
-                'last_name': name.split()[0] if len(name.split()) > 1 else '',
-                'email': f'{username}@pbmed.vn',
-            }
-        )
-        if created:
-            user.set_password('123456')
-            user.save()
+        # Check if patient already exists by phone, NOT by username
+        existing_profile = PatientProfile.objects.filter(phone=phone).first()
+        if existing_profile:
+            user = existing_profile.user
+            created = False
+        else:
+            username = f'pbmed_{uuid.uuid4().hex[:8]}'
+            user = User.objects.create_user(
+                username=username,
+                password='123456',
+                first_name=name.split()[-1] if len(name.split()) > 1 else name,
+                last_name=name.split()[0] if len(name.split()) > 1 else '',
+                email=f'{username}@pbmed.vn',
+            )
             Patients.objects.create(user=user)
+            created = True
 
         profile = PatientProfile.objects.filter(user=user, full_name=name).first()
         if not profile:
@@ -167,12 +171,11 @@ def schedule(request):
     week_end = week_start + timedelta(days=6)
 
     # Gộp query: đếm số lịch hẹn theo từng bác sĩ trong tuần
-    from django.db.models import Count, Q as Q_
     stats = Doctors.objects.annotate(
-        total=Count('appointment', filter=Q_(appointment__start_date__gte=week_start, appointment__start_date__lte=week_end)),
-        accepted=Count('appointment', filter=Q_(appointment__status__status=STATUS_ACCEPTED, appointment__start_date__gte=week_start, appointment__start_date__lte=week_end)),
-        waited=Count('appointment', filter=Q_(appointment__status__status=STATUS_WAITED, appointment__start_date__gte=week_start, appointment__start_date__lte=week_end)),
-        today_count=Count('appointment', filter=Q_(appointment__start_date=today)),
+        total=Count('appointment', filter=Q(appointment__start_date__gte=week_start, appointment__start_date__lte=week_end)),
+        accepted=Count('appointment', filter=Q(appointment__status__status=STATUS_ACCEPTED, appointment__start_date__gte=week_start, appointment__start_date__lte=week_end)),
+        waited=Count('appointment', filter=Q(appointment__status__status=STATUS_WAITED, appointment__start_date__gte=week_start, appointment__start_date__lte=week_end)),
+        today_count=Count('appointment', filter=Q(appointment__start_date=today)),
     ).select_related('user', 'specialty')
 
     weekdays = [week_start + timedelta(days=i) for i in range(7)]

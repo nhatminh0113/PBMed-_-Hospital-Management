@@ -86,6 +86,8 @@
               <span class="badge bg-warning text-dark">Chờ xác nhận</span>
             {% elif appointment.status.status == "Cancelled" %}
               <span class="badge bg-danger">Đã hủy</span>
+            {% elif appointment.status.status == "Da kham" %}
+              <span class="badge bg-success">Đã khám</span>
             {% else %}
               <span class="badge bg-secondary">{{ appointment.status.status }}</span>
             {% endif %}
@@ -114,8 +116,9 @@
                   <div class="mb-3">
                     <label class="form-label fw-bold text-dark">Trạng thái mới</label>
                     <select name="status" class="form-select" required>
-                      <option value="Accepted" {% if appointment.status.status == "Accepted" %}selected{% endif %}>Đã chấp nhận</option>
-                      <option value="Waited" {% if appointment.status.status == "Waited" %}selected{% endif %}>Đang chờ</option>
+                      <option value="Accepted" {% if appointment.status.status == "Accepted" %}selected{% endif %}>Chờ khám</option>
+                      <option value="Waited" {% if appointment.status.status == "Waited" %}selected{% endif %}>Chờ xác nhận</option>
+                      <option value="Da kham" {% if appointment.status.status == "Da kham" %}selected{% endif %}>Đã khám</option>
                       <option value="Cancelled" {% if appointment.status.status == "Cancelled" %}selected{% endif %}>Đã hủy</option>
                     </select>
                   </div>

@@ -6,15 +6,32 @@ from django.db.models import Count, Q
 from datetime import date, timedelta
 from django.utils import timezone
 
-from patients.models import Appointment, Status, ExaminationRecord, CLSIndication
+from patients.models import Appointment, Status, ExaminationRecord, CLSIndication, CLSService
 from users.models import Doctors, Specialty
 
 STATUS_ACCEPTED = 'Accepted'
 STATUS_WAITED = 'Waited'
 STATUS_CANCELLED = 'Cancelled'
+STATUS_EXAMINED = 'Da kham'
+
+
+def doctor_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        if not request.user.is_doctor or not hasattr(request.user, 'doctors'):
+            messages.error(request, 'Bạn không có quyền truy cập trang này.')
+            if request.user.is_admin:
+                return redirect('admin_dashboard')
+            elif request.user.is_receptionist:
+                return redirect('receptionist_dashboard')
+            return redirect('login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 @login_required(login_url='/login')
+@doctor_required
 def doctor_dashboard(request):
     doctor = request.user.doctors
     today = date.today()
@@ -37,25 +54,34 @@ def doctor_dashboard(request):
 
     for app in Appointment.objects.filter(doctor=doctor, status__status=STATUS_ACCEPTED
         ).exclude(confirmed_at__isnull=True).select_related('patient_profile').order_by('-confirmed_at')[:5]:
-        activities.append(('confirm', app.confirmed_at, f'Xác nhận lịch hẹn cho {app.patient_profile.full_name}',
-                          app.start_date.strftime('%d/%m/%Y') if app.start_date else ''))
+        activities.append({'type': 'confirm', 'time': app.confirmed_at,
+                          'text': f'Xác nhận lịch hẹn cho {app.patient_profile.full_name if app.patient_profile else app.patient.user.username}',
+                          'detail': app.start_date.strftime('%d/%m/%Y') if app.start_date else '',
+                          'color': 'text-success', 'icon': 'bi-check-circle'})
 
     for app in Appointment.objects.filter(doctor=doctor, status__status=STATUS_CANCELLED
         ).exclude(rejected_at__isnull=True).select_related('patient_profile').order_by('-rejected_at')[:5]:
-        activities.append(('cancel', app.rejected_at, f'Hủy lịch hẹn của {app.patient_profile.full_name}',
-                          app.start_date.strftime('%d/%m/%Y') if app.start_date else ''))
+        activities.append({'type': 'cancel', 'time': app.rejected_at,
+                          'text': f'Hủy lịch hẹn của {app.patient_profile.full_name if app.patient_profile else app.patient.user.username}',
+                          'detail': app.start_date.strftime('%d/%m/%Y') if app.start_date else '',
+                          'color': 'text-danger', 'icon': 'bi-x-circle'})
 
     for exam in ExaminationRecord.objects.filter(doctor=doctor
         ).select_related('patient_profile').order_by('-exam_date')[:5]:
-        activities.append(('exam', exam.exam_date, f'Khám bệnh cho {exam.patient_profile.full_name}',
-                          f'Phòng {exam.room}' if exam.room else ''))
+        activities.append({'type': 'exam', 'time': exam.exam_date,
+                          'text': f'Khám bệnh cho {exam.patient_profile.full_name if exam.patient_profile else "BN"}',
+                          'detail': f'Phòng {exam.room}' if exam.room else '',
+                          'color': 'text-info', 'icon': 'bi-heart-pulse'})
 
     for cls in CLSIndication.objects.filter(examination_record__doctor=doctor, status='completed'
         ).exclude(result_date__isnull=True).select_related('cls_service', 'examination_record__patient_profile'
         ).order_by('-result_date')[:5]:
-        activities.append(('cls', cls.result_date, f'Kết quả {cls.cls_service.name} cho {cls.examination_record.patient_profile.full_name}', ''))
+        pname = cls.examination_record.patient_profile.full_name if cls.examination_record.patient_profile else 'BN'
+        activities.append({'type': 'cls', 'time': cls.result_date,
+                          'text': f'Kết quả {cls.cls_service.name} cho {pname}',
+                          'detail': '', 'color': 'text-warning', 'icon': 'bi-flask'})
 
-    activities.sort(key=lambda x: x[1] or timezone.now(), reverse=True)
+    activities.sort(key=lambda x: x['time'] or timezone.now(), reverse=True)
     activities = activities[:10]
 
     return render(request, 'doctors/doctor_dashboard.html', {
@@ -72,6 +98,7 @@ def doctor_dashboard(request):
 
 
 @login_required(login_url='/login')
+@doctor_required
 def view_appointments(request):
     if request.method == 'POST':
         app = get_object_or_404(Appointment, id=request.POST.get('app'))
@@ -102,6 +129,7 @@ def view_appointments(request):
 
 
 @login_required(login_url='/login')
+@doctor_required
 def doctor_patient_list(request):
     doctor = request.user.doctors
     records = ExaminationRecord.objects.filter(doctor=doctor).select_related(
@@ -123,7 +151,7 @@ def doctor_patient_list(request):
     today = date.today()
     patient_data = [{
         'record': r,
-        'age': today.year - r.patient_profile.birth_year,
+        'age': today.year - r.patient_profile.birth_year if r.patient_profile else 0,
         'pending_cls': r.cls_indications.filter(status='pending').count(),
     } for r in records]
 
@@ -133,6 +161,7 @@ def doctor_patient_list(request):
 
 
 @login_required(login_url='/login')
+@doctor_required
 def doctor_exam_list(request):
     doctor = request.user.doctors
     apps = Appointment.objects.filter(doctor=doctor, status__status=STATUS_ACCEPTED).select_related('patient_profile')
@@ -145,6 +174,7 @@ def doctor_exam_list(request):
 
 
 @login_required(login_url='/login')
+@doctor_required
 def doctor_exam_create(request, appointment_id):
     doctor = request.user.doctors
     appointment = get_object_or_404(Appointment, id=appointment_id, doctor=doctor)
@@ -172,21 +202,19 @@ def doctor_exam_create(request, appointment_id):
 
         for cls_id in request.POST.getlist('cls_services'):
             if cls_id:
-                from patients.models import CLSService, CLSIndication
                 CLSIndication.objects.create(
                     examination_record=record,
                     cls_service=get_object_or_404(CLSService, id=int(cls_id)),
                 )
 
-        if appointment.status.status != STATUS_ACCEPTED:
-            appointment.status = Status.objects.get(status=STATUS_ACCEPTED)
+        if appointment.status.status == STATUS_ACCEPTED:
+            appointment.status = Status.objects.get(status=STATUS_EXAMINED)
             appointment.confirmed_at = timezone.now()
             appointment.save()
 
         messages.success(request, 'Tạo phiếu khám thành công!', extra_tags='success')
         return redirect('doctor_exam_detail', exam_id=record.id)
 
-    from patients.models import CLSService
     return render(request, 'doctors/exam_form.html', {
         'appointment': appointment,
         'profile': appointment.patient_profile,
@@ -195,6 +223,7 @@ def doctor_exam_create(request, appointment_id):
 
 
 @login_required(login_url='/login')
+@doctor_required
 def doctor_exam_detail(request, exam_id):
     record = get_object_or_404(
         ExaminationRecord.objects.select_related(
@@ -206,6 +235,7 @@ def doctor_exam_detail(request, exam_id):
 
 
 @login_required(login_url='/login')
+@doctor_required
 def doctor_exam_edit(request, exam_id):
     record = get_object_or_404(ExaminationRecord, id=exam_id, doctor=request.user.doctors)
     if request.method == 'POST':
@@ -217,17 +247,16 @@ def doctor_exam_edit(request, exam_id):
         messages.success(request, 'Cập nhật phiếu khám thành công!', extra_tags='success')
         return redirect('doctor_exam_detail', exam_id=record.id)
 
-    from patients.models import CLSService
     return render(request, 'doctors/exam_edit.html', {
         'record': record, 'cls_services': CLSService.objects.all(),
     })
 
 
 @login_required(login_url='/login')
+@doctor_required
 def doctor_add_cls(request, exam_id):
     record = get_object_or_404(ExaminationRecord, id=exam_id, doctor=request.user.doctors)
     if request.method == 'POST':
-        from patients.models import CLSService, CLSIndication
         added = 0
         for cls_id in request.POST.getlist('cls_services'):
             if cls_id:
@@ -243,7 +272,6 @@ def doctor_add_cls(request, exam_id):
             messages.error(request, 'Các chỉ định đã tồn tại.')
         return redirect('doctor_exam_detail', exam_id=record.id)
 
-    from patients.models import CLSService
     existing_ids = record.cls_indications.values_list('cls_service_id', flat=True)
     return render(request, 'doctors/add_cls.html', {
         'record': record, 'cls_services': CLSService.objects.all(),
@@ -252,18 +280,21 @@ def doctor_add_cls(request, exam_id):
 
 
 @login_required(login_url='/login')
+@doctor_required
 def cls_pending_list(request):
-    from patients.models import CLSIndication
+    doctor = request.user.doctors
     return render(request, 'doctors/cls_pending.html', {
-        'indications': CLSIndication.objects.filter(status='pending').select_related(
+        'indications': CLSIndication.objects.filter(
+            status='pending', examination_record__doctor=doctor
+        ).select_related(
             'cls_service', 'examination_record__patient_profile', 'examination_record__doctor__user'
         ).order_by('examination_record__exam_date'),
     })
 
 
 @login_required(login_url='/login')
+@doctor_required
 def cls_update_result(request, indication_id):
-    from patients.models import CLSIndication
     indication = get_object_or_404(CLSIndication, id=indication_id, status='pending')
     if request.method == 'POST':
         indication.result = request.POST.get('result', '')

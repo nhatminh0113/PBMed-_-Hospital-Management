@@ -15,7 +15,9 @@ def patient_dashboard(request):
 
 @login_required(login_url='/login')
 def my_appointments(request):
-    apps = Appointment.objects.filter(patient__user=request.user)
+    apps = Appointment.objects.filter(patient__user=request.user).select_related(
+        'doctor__user', 'status', 'time', 'patient_profile'
+    )
     fs = request.GET.get('filter_status')
     fd = request.GET.get('filter_date')
     fn = request.GET.get('filter_doctor_name')
@@ -72,14 +74,17 @@ def patient_confirm_book(request, doctor):
     doc = get_object_or_404(Doctors, user__username=doctor)
 
     if request.method == 'POST':
-        profile = get_object_or_404(PatientProfile, id=request.POST.get('profile_id'), user=request.user)
+        profile_id = request.POST.get('profile_id')
+        if not profile_id:
+            messages.error(request, 'Vui lòng chọn hồ sơ bệnh nhân.')
+            return redirect('book_appointment')
+        profile = get_object_or_404(PatientProfile, id=profile_id, user=request.user)
         time_obj = get_object_or_404(Time, time=request.POST.get('time'))
 
         Appointment.objects.create(
             summary=request.POST.get('summary', ''),
             description=request.POST.get('description', ''),
             start_date=request.POST.get('date'),
-            start_time=request.POST.get('time', ''),
             time=time_obj,
             doctor=doc,
             patient=get_object_or_404(Patients, user=request.user),
@@ -166,7 +171,9 @@ def exam_history(request, profile_id):
     profile = get_object_or_404(PatientProfile, id=profile_id, user=request.user)
     return render(request, 'patients/exam_history.html', {
         'profile': profile,
-        'records': ExaminationRecord.objects.filter(patient_profile=profile).select_related('doctor__user'),
+        'records': ExaminationRecord.objects.filter(patient_profile=profile).select_related(
+            'doctor__user', 'doctor__specialty'
+        ),
     })
 
 

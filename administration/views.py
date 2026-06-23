@@ -9,7 +9,6 @@ import csv
 
 from patients.models import Appointment, PatientProfile, ExaminationRecord, CLSIndication
 from users.models import Doctors, Patients, Specialty, ReceptionistProfile
-
 User = get_user_model()
 
 
@@ -47,7 +46,7 @@ def dashboard(request):
     return render(request, 'administration/dashboard.html', {
         'total_doctors': Doctors.objects.count(),
         'total_patients': Patients.objects.count(),
-        'total_receptionists': User.objects.filter(is_receptionist=True).count(),
+        'total_receptionists': ReceptionistProfile.objects.count(),
         'total_appointments': Appointment.objects.count(),
         'total_examined': ExaminationRecord.objects.count(),
         'total_cls': CLSIndication.objects.count(),
@@ -316,7 +315,8 @@ def report_export(request, report_type):
     if report_type == 'appointments':
         return csv_export('lich_hen',
             ['STT', 'Bệnh nhân', 'Bác sĩ', 'Ngày', 'Giờ', 'Trạng thái'],
-            [[i, a.patient_profile.full_name or '', f'{a.doctor.user.last_name} {a.doctor.user.first_name}' if a.doctor else '',
+            [[i, (a.patient_profile.full_name if a.patient_profile else a.patient.user.username),
+              f'{a.doctor.user.last_name} {a.doctor.user.first_name}' if a.doctor else '',
               a.start_date, a.time.time if a.time else '', a.status.status if a.status else '']
              for i, a in enumerate(Appointment.objects.select_related('patient_profile', 'doctor__user', 'status').all(), 1)])
 

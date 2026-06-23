@@ -1,15 +1,13 @@
-from django.shortcuts import render
-
-from multiprocessing import context
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
 from .models import Doctors, Patients, Reste_token, Specialty
 from .helpers import send_email
+from django.utils import timezone
+from datetime import timedelta
 import uuid
 
 
@@ -37,6 +35,10 @@ def register(request):
 
     if Users.objects.filter(username=username).exists():
       messages.error(request, 'Tên đăng nhập đã tồn tại.')
+      return render(request, 'users/register.html', context={'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender})
+    
+    if Users.objects.filter(email=email).exists():
+      messages.error(request, 'Email đã được sử dụng.')
       return render(request, 'users/register.html', context={'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender})
 
     user = Users.objects.create_user(
@@ -99,35 +101,41 @@ def forgot_view(request):
             reset = Reste_token.objects.create(
                 user=user[0],
                 email=user[0].email,  
-                token=token  
+                token=token,
+                expiry_date=timezone.now() + timedelta(hours=24)
             )
             reset.save()
             sent = send_email(user[0].email,token)
             if sent:
                 return render(request, 'users/forgot.html',context={'send_email_succes': 1})
+            else:
+                messages.success(request, f'Yêu cầu đặt lại mật khẩu thành công. Link reset: http://127.0.0.1:8000/reset/{token}/')
+                return redirect('password-reset')
         else:
-            return render(request, 'users/forgot.html', context={'errorlogin': 1})
+            messages.error(request, 'Email không tồn tại trong hệ thống.')
+            return redirect('password-reset')
     return render(request, 'users/forgot.html')
 
 def reset_view(request,token):
     if request.method == 'POST':
         reste = Reste_token.objects.filter(token=token)
-        print(reste)
         if reste:
+            # Check expiry
+            if reste[0].expiry_date and timezone.now() > reste[0].expiry_date:
+                reste.delete()
+                messages.error(request, 'Link đặt lại mật khẩu đã hết hạn. Vui lòng thực hiện lại.')
+                return redirect('password-reset')
             password = request.POST.get('password')
             confirm_password = request.POST.get('conf_password')
             if len(password) < 6:
-                messages.error(request, 'Password must be at least 6 characters long.')
+                messages.error(request, 'Mật khẩu phải có ít nhất 6 ký tự.')
                 return render(request, 'users/reset.html', {'token': token} )
-            print(password)
-            print(confirm_password)
             if password != confirm_password:
-                messages.error(request, 'password do not match')
+                messages.error(request, 'Mật khẩu không khớp.')
                 return render(request, 'users/reset.html', {'token': token} )
             user = Users.objects.filter(email=reste[0].email).first()
             if user:
-                hashed_password = make_password(password)
-                user.password = hashed_password
+                user.set_password(password)
                 user.save()
                 reste.delete()
                 return redirect('login')

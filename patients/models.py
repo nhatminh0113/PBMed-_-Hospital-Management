@@ -56,7 +56,6 @@ class Appointment(models.Model):
     summary = models.TextField()
     description = models.TextField(blank=True, default='')
     start_date = models.DateField()
-    start_time = models.CharField(max_length=10, blank=True, default="")
     status = models.ForeignKey(Status, on_delete=models.CASCADE)
     time = models.ForeignKey(Time, on_delete=models.CASCADE, default=1)
     rejection_reason = models.CharField(max_length=255, blank=True, default='')
