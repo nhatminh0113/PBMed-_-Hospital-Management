@@ -30,6 +30,3 @@ db.sqlite3
 Thumbs.db
 .DS_Store
 ~$*
-
-# Hermes temp files
-.hermes-tmp.*

@@ -1,32 +1,123 @@
+from pathlib import Path
+import random
+import string
+import os
+
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import date, timedelta
+from dotenv import load_dotenv
 
 User = get_user_model()
 
+# Project root (4 levels up from this file)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+
 
 class Command(BaseCommand):
-    help = 'Thiết lập database: migrate + seed data (ORM)'
+    help = 'Tự động: tạo .env → tạo DB → migrate → seed data'
 
     def handle(self, *args, **options):
-        self.stdout.write('1/3 Đang migrate...')
+        self.stdout.write('=== PBMed — Thiết lập tự động ===\n')
+
+        self._ensure_env()
+        self._ensure_database()
+
+        self.stdout.write('\n1/4 Đang migrate...')
         call_command('migrate', verbosity=0)
 
-        self.stdout.write('2/3 Đang tạo dữ liệu mẫu...')
+        self.stdout.write('2/4 Đang tạo dữ liệu mẫu...')
         self._seed_specialties()
         self._seed_users()
         self._seed_profiles()
         self._seed_catalogs()
         self._seed_appointments()
 
-        self.stdout.write(self.style.SUCCESS('\n3/3 Hoàn tất!'))
+        self.stdout.write(self.style.SUCCESS('\nHoàn tất!'))
+        self._print_accounts()
+
+    # ───────────── helpers ─────────────
+
+    def _ensure_env(self):
+        """Tạo .env từ .env.example nếu chưa có."""
+        env_path = BASE_DIR / '.env'
+        example_path = BASE_DIR / '.env.example'
+
+        if env_path.exists():
+            self.stdout.write('→ File .env đã tồn tại.')
+            return
+
+        if not example_path.exists():
+            self.stdout.write(self.style.WARNING(
+                '⚠ Không tìm thấy .env.example, bỏ qua tạo .env.'))
+            return
+
+        content = example_path.read_text(encoding='utf-8')
+
+        # Sinh SECRET_KEY ngẫu nhiên
+        secret = ''.join(random.choices(
+            string.ascii_letters + string.digits + '!@#$%^&*(-_=+)', k=50))
+        content = content.replace(
+            'thay-bang-secret-key-cua-ban',
+            f'django-insecure-{secret}',
+        )
+
+        env_path.write_text(content, encoding='utf-8')
+        self.stdout.write(self.style.SUCCESS(
+            '→ Đã tạo file .env từ .env.example'))
+
+        # Tải lại .env vào môi trường
+        load_dotenv(env_path, override=True)
+
+    def _ensure_database(self):
+        """Kết nối MySQL và tạo database nếu chưa có."""
+        import MySQLdb
+
+        host = os.getenv('DB_HOST', 'localhost')
+        port = int(os.getenv('DB_PORT', '3306'))
+        user = os.getenv('DB_USER', 'root')
+        password = os.getenv('DB_PASSWORD', '')
+        db_name = os.getenv('DB_NAME', 'pbmed')
+
+        try:
+            conn = MySQLdb.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+            )
+            cursor = conn.cursor()
+            cursor.execute(
+                f"CREATE DATABASE IF NOT EXISTS `{db_name}` "
+                "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+            )
+            cursor.close()
+            conn.close()
+            self.stdout.write(self.style.SUCCESS(
+                f'→ Database "{db_name}" sẵn sàng.'))
+        except MySQLdb.OperationalError as e:
+            code, msg = e.args
+            if code == 1045:  # Access denied
+                self.stdout.write(self.style.ERROR(
+                    '⚠ Sai mật khẩu MySQL. Vui lòng sửa DB_PASSWORD trong file .env, '
+                    'rồi chạy lại: python manage.py setup'))
+            elif code == 2003:  # Can't connect
+                self.stdout.write(self.style.ERROR(
+                    '⚠ Không kết nối được MySQL. Kiểm tra DB_HOST/DB_PORT trong .env.'))
+            else:
+                self.stdout.write(self.style.ERROR(f'⚠ Lỗi MySQL: {e}'))
+            raise
+
+    def _print_accounts(self):
         self.stdout.write(self.style.SUCCESS('\nTài khoản mẫu:'))
-        self.stdout.write('  Admin:        admin / 123456')
-        self.stdout.write('  Bác sĩ:       doc001-doc005 / 123456')
-        self.stdout.write('  Lễ tân:       reception01-reception02 / 123456')
-        self.stdout.write('  Bệnh nhân:    patient01-patient05 / 123456')
+        self.stdout.write('  Quản trị:     admin / 123456')
+        self.stdout.write('  Bác sĩ:       doc001–doc005 / 123456')
+        self.stdout.write('  Lễ tân:       reception01–reception02 / 123456')
+        self.stdout.write('  Bệnh nhân:    patient01–patient05 / 123456')
+
+    # ───────────── seed methods (giữ nguyên) ─────────────
 
     def _seed_specialties(self):
         from users.models import Specialty
@@ -55,7 +146,7 @@ class Command(BaseCommand):
         admin.is_admin = True
         admin.save()
 
-        # Doctors - realistic names
+        # Doctors
         doc_data = [
             ('doc001', 'Tuấn', 'Nguyễn Văn', 1),
             ('doc002', 'Hương', 'Lê Thị', 2),
@@ -87,7 +178,7 @@ class Command(BaseCommand):
             ReceptionistProfile.objects.create(user=u, employee_id=username)
         self.stdout.write('  -> 2 lễ tân')
 
-        # Patients - realistic Vietnamese names
+        # Patients
         from patients.models import PatientProfile
         patient_data = [
             ('patient01', 'Nguyễn Văn An', 1985, 'Male', '0901234501', 'BHYT-VN001', '12 Nguyễn Trãi, Thanh Xuân', 'Hà Nội'),
@@ -176,9 +267,7 @@ class Command(BaseCommand):
         def t(idx):
             return times[idx % len(times)]
 
-        # Create 12 appointments across different doctors/patients/statuses
         apps_data = [
-            # (doctor, patient, profile, summary, days_from_today, time_idx, status, confirmed, rejected_reason)
             (doc1, pats[0], pps[0], 'Đau bụng, buồn nôn', 1, 2, status_w, False, ''),
             (doc1, pats[1], pps[1], 'Khám tim mạch định kỳ', 0, 4, status_a, True, ''),
             (doc2, pats[2], pps[2], 'Đau lưng, mỏi mệt', 2, 1, status_c, False, 'Bệnh nhân bận'),
@@ -205,7 +294,6 @@ class Command(BaseCommand):
             apps.append(a)
         self.stdout.write(f'  -> {len(apps)} lịch hẹn')
 
-        # Create examination records for appointments that were seen (status = Da kham or Accepted with past date)
         cls_services = list(CLSService.objects.all())
         exams_created = 0
         cls_created = 0
@@ -249,8 +337,7 @@ class Command(BaseCommand):
                 )
                 exams_created += 1
 
-                # Add CLS indications
-                num_cls = (i % 3) + 1  # 1-3 CLS per exam
+                num_cls = (i % 3) + 1
                 for j in range(num_cls):
                     svc = cls_services[(i * 3 + j) % len(cls_services)]
                     result = f'Kết quả {svc.name}: Bình thường, không phát hiện bất thường' if (i + j) % 2 == 0 else f'Kết quả {svc.name}: Có biểu hiện bất thường, cần theo dõi thêm'
@@ -267,18 +354,16 @@ class Command(BaseCommand):
         self.stdout.write(f'  -> {exams_created} phiếu khám')
         self.stdout.write(f'  -> {cls_created} chỉ định CLS')
 
-        # Update completed appointments status to Da kham
         Appointment.objects.filter(
             id__in=[a.id for a in apps if a.status.status == 'Accepted' and a.start_date <= today]
         ).update(status=Status.objects.get(status='Da kham'))
         self.stdout.write('  -> Cập nhật trạng thái "Đã khám" cho các lịch đã khám')
 
-        # ====== DEMO CHI TIẾT CHO BÁC SĨ NGUYỄN VĂN TUẤN (doc001) ======
+        # Demo chi tiết bác sĩ doc001
         self.stdout.write('\n  == CHI TIẾT DEMO BÁC SĨ NGUYỄN VĂN TUẤN ==')
         doc1_apps = Appointment.objects.filter(doctor=doc1).order_by('start_date')
         self.stdout.write(f'  -> {doc1_apps.count()} lịch hẹn cho doc001')
 
-        # Ensure doc001 has at least 8 appointments across all statuses
         doc1_patients_cycle = [pats[i % 5] for i in range(8)]
         doc1_profiles_cycle = [pps[i % 5] for i in range(8)]
         doc1_statuses = [status_w, status_a, status_dk, status_c, status_w, status_a, status_dk, status_w]
@@ -308,15 +393,13 @@ class Command(BaseCommand):
             )
         self.stdout.write(f'  -> Doc001 có {Appointment.objects.filter(doctor=doc1).count()} lịch hẹn')
 
-        # Create 6 detailed examination records for doc001
         doc1_exam_apps = Appointment.objects.filter(
             doctor=doc1, status__status__in=['Da kham', 'Accepted']
         ).filter(start_date__lte=today)[:6]
 
         doc1_exam_data = [
             {
-                'room': 'Phòng 301',
-                'reason': 'Đau bụng vùng thượng vị, buồn nôn, sốt nhẹ 37.5 độ',
+                'room': 'Phòng 301', 'reason': 'Đau bụng vùng thượng vị, buồn nôn, sốt nhẹ 37.5 độ',
                 'vitals': {'pulse': '78', 'temperature': '37.5', 'blood_pressure': '120/80', 'weight': '65'},
                 'health': 'Bệnh nhân tỉnh, tiếp xúc tốt. Bụng mềm, ấn đau vùng thượng vị. Không có phản ứng thành bụng.',
                 'diagnosis': 'Viêm dạ dày cấp do HP (nhiễm khuẩn)',
@@ -329,8 +412,7 @@ class Command(BaseCommand):
                 ]
             },
             {
-                'room': 'Phòng 302',
-                'reason': 'Khám tim mạch định kỳ - HA cao 160/90, đau đầu, hoa mắt',
+                'room': 'Phòng 302', 'reason': 'Khám tim mạch định kỳ - HA cao 160/90, đau đầu, hoa mắt',
                 'vitals': {'pulse': '82', 'temperature': '36.8', 'blood_pressure': '160/95', 'weight': '68'},
                 'health': 'Bệnh nhân tỉnh, thể trạng trung bình. Tim đều, T1 T2 rõ. Phổi không ran. HA cao 160/95mmHg.',
                 'diagnosis': 'Tăng huyết áp giai đoạn 2 - Nguy cơ tim mạch cao',
@@ -343,20 +425,16 @@ class Command(BaseCommand):
                 ]
             },
             {
-                'room': 'Phòng 303',
-                'reason': 'Tái khám dạ dày - đã uống thuốc 2 tuần, còn đau ít',
+                'room': 'Phòng 303', 'reason': 'Tái khám dạ dày - đã uống thuốc 2 tuần, còn đau ít',
                 'vitals': {'pulse': '75', 'temperature': '37.0', 'blood_pressure': '130/85', 'weight': '66'},
                 'health': 'Sau 2 tuần điều trị, tình trạng cải thiện. Bụng mềm, không còn đau nhiều. Ăn uống tốt hơn.',
                 'diagnosis': 'Viêm dạ dày - đáp ứng tốt với điều trị. Tiếp tục thuốc thêm 2 tuần.',
                 'history': 'Viêm dạ dày mạn tính. Đã điều trị bằng Amoxicillin + Clarithromycin + Omeprazole.',
                 'family': 'Gia đình: Không có gì đặc biệt.',
-                'cls': [
-                    ('Siêu âm tổng quát', 'completed', 'Siêu âm: Dạ dày bình thường, không thấy dị vật hay ổ loét. Gan, túi mật, tụy, lách bình thường.'),
-                ]
+                'cls': [('Siêu âm tổng quát', 'completed', 'Siêu âm: Dạ dày bình thường, không thấy dị vật hay ổ loét. Gan, túi mật, tụy, lách bình thường.')]
             },
             {
-                'room': 'Phòng 304',
-                'reason': 'Đau họng, ho, sốt 38 độ - nghi viêm amidan',
+                'room': 'Phòng 304', 'reason': 'Đau họng, ho, sốt 38 độ - nghi viêm amidan',
                 'vitals': {'pulse': '88', 'temperature': '38.2', 'blood_pressure': '125/80', 'weight': '64'},
                 'health': 'Bệnh nhân sốt, họng sưng đỏ, amidan 2 bên to đỏ, có xuất tiết mũi sau. HA bình thường.',
                 'diagnosis': 'Viêm amidan cấp do liên cầu khuẩn',
@@ -368,8 +446,7 @@ class Command(BaseCommand):
                 ]
             },
             {
-                'room': 'Phòng 305',
-                'reason': 'Khám tổng quát định kỳ 6 tháng',
+                'room': 'Phòng 305', 'reason': 'Khám tổng quát định kỳ 6 tháng',
                 'vitals': {'pulse': '70', 'temperature': '36.5', 'blood_pressure': '115/75', 'weight': '67'},
                 'health': 'Bệnh nhân khỏe, không có biểu hiện bệnh lý. Thể trạng tốt, cân nặng ổn định.',
                 'diagnosis': 'Sức khỏe tốt - không phát hiện bệnh lý. Khuyến nghị tập thể dục đều, ăn uống điều độ.',
@@ -382,8 +459,7 @@ class Command(BaseCommand):
                 ]
             },
             {
-                'room': 'Phòng 306',
-                'reason': 'Đau tức hạ sườn phải, sau ăn nhiều mỡ, buồn nôn',
+                'room': 'Phòng 306', 'reason': 'Đau tức hạ sườn phải, sau ăn nhiều mỡ, buồn nôn',
                 'vitals': {'pulse': '80', 'temperature': '36.9', 'blood_pressure': '145/90', 'weight': '66'},
                 'health': 'Bệnh nhân đau tức vùng hạ sườn phải, lan ra sau lưng. Murphy (+) nhẹ. Ăn mỡ thấy đau tăng.',
                 'diagnosis': 'Viêm túi mật cấp do sỏi mật',
@@ -413,16 +489,10 @@ class Command(BaseCommand):
             record = ExaminationRecord.objects.create(
                 patient_profile=a.patient_profile,
                 doctor=doc1, appointment=a, exam_date=edate,
-                room=data['room'],
-                reason=data['reason'],
-                diagnosis=data['diagnosis'],
-                pulse=data['vitals']['pulse'],
-                temperature=data['vitals']['temperature'],
-                blood_pressure=data['vitals']['blood_pressure'],
-                weight=data['vitals']['weight'],
-                health_status=data['health'],
-                medical_history=data['history'],
-                family_history=data['family'],
+                room=data['room'], reason=data['reason'], diagnosis=data['diagnosis'],
+                pulse=data['vitals']['pulse'], temperature=data['vitals']['temperature'],
+                blood_pressure=data['vitals']['blood_pressure'], weight=data['vitals']['weight'],
+                health_status=data['health'], medical_history=data['history'], family_history=data['family'],
             )
             exams_created += 1
 

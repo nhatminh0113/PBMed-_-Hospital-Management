@@ -19,66 +19,25 @@ PBMed là hệ thống quản lý bệnh viện xây dựng trên Django, hỗ t
 
 ## Cài đặt
 
-### 1. Clone & vào thư mục
-
 ```bash
-git clone <repo-url>
-cd Hospital-Management-main
-```
+# 1. Clone project
+git clone https://github.com/nhatminh0113/PBMed-_-Hospital-Management.git
+cd PBMed-_-Hospital-Management
 
-### 2. Tạo môi trường ảo
-
-```bash
+# 2. Môi trường ảo & thư viện
 python -m venv venv
-source venv/Scripts/activate   # Git Bash
-# hoặc: venv\Scripts\activate  # CMD
-```
-
-### 3. Cài dependencies
-
-```bash
+source venv/Scripts/activate       # Git Bash
+# venv\Scripts\activate            # CMD
 pip install -r requirements.txt
-```
 
-> Bao gồm `python-dotenv` — tự động load file `.env` khi chạy Django.
-
-### 4. Tạo database MySQL
-
-```sql
-CREATE DATABASE pbmed CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 5. Cấu hình `.env`
-
-Tạo file `.env` trong thư mục gốc (xem mẫu `.env.example`):
-
-```env
-SECRET_KEY=thay-bang-secret-key-cua-ban
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-DB_NAME=pbmed
-DB_USER=root
-DB_PASSWORD=
-DB_HOST=localhost
-DB_PORT=3306
-
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-```
-
-File `.env` này được **tự động load** bởi `python-dotenv` trong `manage.py` — không cần export tay.
-
-### 6. Migrate & seed data
-
-```bash
+# 3. Thiết lập toàn bộ (tạo .env → tạo DB → migrate → seed)
 python manage.py setup
+
+# 4. Chạy server
+python manage.py runserver
 ```
 
-Lệnh này tự động migrate database và tạo dữ liệu mẫu.
+> **Ghi chú:** Lệnh `setup` tự động tạo file `.env` (từ `.env.example` + sinh `SECRET_KEY`), kết nối MySQL tạo database `pbmed`, migrate, và nạp dữ liệu mẫu. Nếu MySQL có password, sửa `DB_PASSWORD` trong `.env` trước khi chạy lại `setup`.
 
 ---
 
@@ -96,10 +55,10 @@ Lệnh này tự động migrate database và tạo dữ liệu mẫu.
 ## Cấu trúc project
 
 ```
-Hospital-Management-main/
+PBMed-_-Hospital-Management/
 ├── manage.py                 # Entry point Django
 ├── requirements.txt          # Dependencies
-├── .env                      # Biến môi trường
+├── .env                      # Biến môi trường (tạo tự động)
 ├── .env.example              # Mẫu .env
 │
 ├── hospital/                 # Cấu hình Django
@@ -113,7 +72,7 @@ Hospital-Management-main/
 │   ├── helpers.py            # Gửi email
 │   ├── urls.py
 │   └── management/commands/
-│       └── setup.py          # Seed data bằng ORM
+│       └── setup.py          # Tự động: .env → DB → migrate → seed
 │
 ├── patients/                 # App: Bệnh nhân
 │   ├── models.py             # Appointment, PatientProfile, CLS...
