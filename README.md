@@ -40,6 +40,8 @@ source venv/Scripts/activate   # Git Bash
 pip install -r requirements.txt
 ```
 
+> Bao gồm `python-dotenv` — tự động load file `.env` khi chạy Django.
+
 ### 4. Tạo database MySQL
 
 ```sql
@@ -48,18 +50,27 @@ CREATE DATABASE pbmed CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ### 5. Cấu hình `.env`
 
-Tạo file `.env` trong thư mục gốc:
+Tạo file `.env` trong thư mục gốc (xem mẫu `.env.example`):
 
 ```env
-SECRET_KEY=django-insecure-your-secret-key-here
+SECRET_KEY=thay-bang-secret-key-cua-ban
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
 DB_NAME=pbmed
 DB_USER=root
 DB_PASSWORD=
 DB_HOST=localhost
 DB_PORT=3306
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
+
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
 ```
+
+File `.env` này được **tự động load** bởi `python-dotenv` trong `manage.py` — không cần export tay.
 
 ### 6. Migrate & seed data
 
